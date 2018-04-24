@@ -62,6 +62,6 @@ app.get('/bad', (request, response) => {
   });
 });
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', undefined, () => {
   console.log(`Server is up on port ${port}`);
 });
