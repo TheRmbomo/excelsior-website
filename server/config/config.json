@@ -1,0 +1,12 @@
+{
+  "test": {
+    "PORT": 3000,
+    "MONGODB_URI": "mongodb://localhost:27017/ExcelsiorDBTest",
+    "JWT_SECRET": "7@,pqR_P8jH6#*NKbux%H"
+  },
+  "development": {
+    "PORT": 3000,
+    "MONGODB_URI": "mongodb://localhost:27017/ExcelsiorDB",
+    "JWT_SECRET": "@xPQE+TV?6&tJi+URZ6^UMf"
+  }
+}

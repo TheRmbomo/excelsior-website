@@ -1,0 +1,27 @@
+.top {
+  margin-top: 1em
+}
+
+.right {
+  float: right
+}
+
+.island {
+  margin: auto
+}
+
+.box {
+  margin: 5px
+}
+
+a {
+  color: #002F7F
+}
+
+  a:hover {
+    color: #2F4F9F
+  }
+
+  a:active {
+    color: #4F6FBF
+  }

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <title>{{pageTitle}}</title>
+    {{> links}}
+  </head>
+  <body>
+    {{> header}}
+    <p>{{welcomeMessage}}</p>
+    <p>Search for your user profile.</p>
+    <form id="searchUser" method="get">
+      <input type="text" name="email" placeholder="Type your email here..." autocomplete="off">
+      <input type="submit" value="Search">
+    </form>
+    <div class="top" id="results"></div>
+    {{> pageJS js='home'}}
+    {{> footer}}
+  </body>
+</html>

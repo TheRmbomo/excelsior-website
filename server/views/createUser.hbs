@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <title>{{pageTitle}}</title>
+    {{> links}}
+  </head>
+  <body>
+    {{> header}}
+    <form id="signup">
+      <table>
+        <tr>
+          <td>Email:</td>
+          <td><input type="email" name="email" autocomplete="on"></td>
+        </tr>
+        <tr>
+          <td>Password:</td>
+          <td><input type="password" name="password" autocomplete="on"></td>
+        </tr>
+      </table>
+      <input type="submit" value="Sign up">
+    </form>
+    {{> pageJS js='createUser'}}
+    {{> footer}}
+  </body>
+</html>

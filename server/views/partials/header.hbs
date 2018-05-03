@@ -1,0 +1,18 @@
+<header>
+  <div class="box">
+    <span>
+      <a class="box" href="/"><img src="" alt="Excelsior Industries"/></a>
+      {{#unless loggedIn}}
+        <a class="right box" href="/signup">Sign Up</a>
+        <a class="right box" href="/login">Login</a>
+      {{else}}
+        <a class="right box" href="/logout">Logout</a>
+      {{/unless}}
+    </span>
+    <h1>{{pageTitle}}</h1>
+    {{#if navigation}}
+      {{> navigation}}
+    {{/if}}
+  </div>
+</header>
+<hr>

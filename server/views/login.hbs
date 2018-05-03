@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <title>Login</title>
+    {{> links}}
+  </head>
+  <body>
+    {{> header}}
+    <form id="login">
+      <table>
+        <tr>
+          <td>Email:</td>
+          <td><input type="email" name="email" autocomplete="on"></td>
+        </tr>
+        <tr>
+          <td>Password:</td>
+          <td><input type="password" name="password" autocomplete="on"></td>
+        </tr>
+      </table>
+      <input type="submit" value="Login">
+
+      <p>Don't have an account? Sign up <a href="/signup">here</a>.</p>
+
+    </form>
+    {{> pageJS js='login'}}
+    {{> footer}}
+  </body>
+</html>
