@@ -13,7 +13,6 @@ var defProps = {};
 var renderPage = (res, link, options) => res.render(link, Object.assign(defProps, options));
 
 app.all('*', loggedin, (req, res, next) => {
-  // console.log('log', req.loggedIn);
   app.set('defProps', {
     loggedIn: req.loggedIn,
     navigation: true
@@ -48,24 +47,17 @@ app.post('/login', (req, res) => {
     });
 });
 
-app.get('/users/me', authenticate, (req, res) => {
-  var {loggedin} = defProps;
-  console.log(loggedin);
-  if (!loggedin) {
-    return renderPage(res, 'login.hbs', {
-    });
-  }
-  renderPage(res, 'userProfile.hbs', {
+app.get('/users/me', loggedin, (req, res) => {
+  if (req.loggedIn) renderPage(res, 'userProfile.hbs', {
     pageTitle: (req.user.name || req.user.email)
   });
+  else res.redirect('/login');
 });
 
 app.delete('/logout', authenticate, (req, res) => {
-  res.redirect(200, '/');
   req.user.removeToken(req.token)
-    .then(() => res.status(200).res.send(),
-      e => res.status(400).send(e)
-    );
+    .then(() => res.status(200).send({message: 'Successfully logged out'}))
+    .catch(e => res.status(400).send(e));
 });
 
 module.exports = {

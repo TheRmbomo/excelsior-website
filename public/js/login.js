@@ -22,11 +22,13 @@ $('#login').on('submit', event => {
     timeout: 5000
   })
   .done((res, status, xhr) => {
-    // console.log(res);
     var token = xhr.getResponseHeader('x-auth');
-    console.log(token);
-    document.cookie = 'x-auth=' + token;
-    $(location).attr("href", "/");
+    document.cookie = 'x-auth=' + token + ';path=/;';
+    location.href = "/";
+    $('#error-box').html('');
   })
-  .fail(e => console.log(e.responseText));
+  .fail(err => {
+    var {error} = err.responseJSON;
+    $('#error-box').html(error);
+  });
 });

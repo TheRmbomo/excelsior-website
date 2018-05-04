@@ -5,6 +5,9 @@ const _ = require('lodash');
 
 const {app} = require('./../server');
 const {renderPage} = require('./user-routes');
+const {authenticate, loggedin} = require('./../middleware/authenticate');
+
+var defProps = {};
 
 app.get('/', (req, res) => {
   renderPage(res, 'home.hbs', {
@@ -25,9 +28,9 @@ app.get('/signup', (req, res) => {
   });
 });
 
-app.get('/login', (req, res) => {
-  renderPage(res, 'login.hbs', {
-  });
+app.get('/login', loggedin, (req, res) => {
+  if (!req.loggedIn) renderPage(res, 'login.hbs', {pageTitle: 'Login'});
+  else res.redirect('/users/me');
 });
 
 app.get('/bad', (request, response) => {

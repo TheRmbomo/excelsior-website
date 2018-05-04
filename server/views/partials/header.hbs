@@ -6,13 +6,17 @@
         <a class="right box" href="/signup">Sign Up</a>
         <a class="right box" href="/login">Login</a>
       {{else}}
-        <a class="right box" href="/logout">Logout</a>
+        {{> pageJS js='logout'}}
+        <form id="logout" class="right box" method="delete">
+          <input type="submit" value="Logout"/>
+        </form>
+        <a class="right box" href="/users/me">My Profile</a>
       {{/unless}}
     </span>
-    <h1>{{pageTitle}}</h1>
     {{#if navigation}}
       {{> navigation}}
     {{/if}}
+    <h1>{{pageTitle}}</h1>
   </div>
 </header>
 <hr>

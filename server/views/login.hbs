@@ -7,11 +7,13 @@
   </head>
   <body>
     {{> header}}
-    <form id="login">
+    <div id="error-box">
+    </div>
+    <form id="login" method="post">
       <table>
         <tr>
           <td>Email:</td>
-          <td><input type="email" name="email" autocomplete="on"></td>
+          <td><input type="text" name="email" autocomplete="on"></td>
         </tr>
         <tr>
           <td>Password:</td>

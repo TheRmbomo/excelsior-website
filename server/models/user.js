@@ -68,7 +68,6 @@ UserSchema.methods.generateAuthToken = function () {
 
 UserSchema.methods.removeToken = function (token) {
   var user = this;
-
   return user.update({
     $pull: {tokens: {token}}
   });
@@ -90,8 +89,8 @@ UserSchema.statics.findByToken = function (token) {
 
 UserSchema.statics.findByCredentials = function (email, password) {
   var User = this;
-
-  return User.findOne({email})
+  if (!validator.isEmail(email)) return Promise.reject({error: 'Invalid email'});
+  return User.findOne({email: new RegExp('^'+email, 'i')})
     .then(user => {
       if (!user) return Promise.reject({error: 'User not found'});
       return new Promise((resolve, reject) => {
