@@ -26,4 +26,5 @@ hbs.registerHelper('getCurrentYear', () => {
 
 module.exports = {app};
 require('./routes/web-routes');
+require('./routes/user-routes');
 require('./socketio');

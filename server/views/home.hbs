@@ -6,12 +6,12 @@
     {{> links}}
   </head>
   <body>
-    {{> header}}
-    <p>{{welcomeMessage}}</p>
-    <p>Search for your user profile.</p>
-    <form id="searchUser" method="get">
-      <input type="text" name="email" placeholder="Type your email here..." autocomplete="off">
-      <input type="submit" value="Search">
+    {{> header pageTitle="Excelsior"}}
+    <p>Search users of the Excelsior community.</p>
+    <div class="top" id="error-box"></div>
+    <form id="searchUser">
+      <input type="search" name="name" placeholder="Search for usernames here..." autocomplete="off">
+      <input type="submit" size=100 maxlength="50" value="Search">
     </form>
     <div class="top" id="results"></div>
     {{> pageJS js='home'}}

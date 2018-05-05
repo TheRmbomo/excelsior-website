@@ -54,7 +54,7 @@ UserSchema.methods.toJSON = function () {
   var user = this;
   var userObject = user.toObject();
 
-  return _.pick(userObject, ['_id', 'email']);
+  return _.pick(userObject, ['_id', 'name']);
 };
 
 UserSchema.methods.generateAuthToken = function () {
@@ -62,6 +62,7 @@ UserSchema.methods.generateAuthToken = function () {
   var access = 'auth';
   var token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET).toString();
 
+  if (user.tokens.length > 5) user.tokens.splice(0,1);
   user.tokens = user.tokens.concat([{access, token}]);
   return user.save().then(() => token);
 };

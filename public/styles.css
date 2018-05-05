@@ -25,3 +25,15 @@ a {
   a:active {
     color: #4F6FBF
   }
+
+.text {
+  font-family: Trebuchet, sans-serif;
+  font-size: 1em;
+}
+
+  .text.center {
+    text-align: center
+  }
+  .text.box {
+    width: 50%
+  }

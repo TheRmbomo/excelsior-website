@@ -10,13 +10,16 @@ socket.on('disconnect', function () {
 
 $('#searchUser').on('submit', function (event) {
   event.preventDefault();
-  var email = $('[name=email]').val();
+  var name = $('[name=name]').val();
 
-  socket.emit('searchUser', email, function (res) {
+  socket.emit('searchUser', name, res => {
     var div = $('#results');
+    var err = $('#error-box');
     div.empty();
-    res.forEach(el => {
-      div.append(`<div>${el.email}</div>`);
+    err.empty();
+    res.forEach(user => {
+      if (user.error) err.append(`<p>${user.error}</p>`);
+      else div.append(`<a href="/user/${user._id}">${user.name}</a><br>`);
     });
   });
 });

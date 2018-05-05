@@ -1,4 +1,5 @@
 const {User} = require('./../models/user');
+const defProps = {};
 
 var loggedin = (req, res, next) => {
   var token = req.cookies['x-auth'];
@@ -10,9 +11,14 @@ var loggedin = (req, res, next) => {
       req.user = user;
       req.token = token;
     }
-    next();
   }).catch(e => {
     req.loggedIn = false;
+  }).then(() => {
+    Object.assign(defProps, {
+      pageTitle: '',
+      loggedIn: req.loggedIn,
+      navigation: true
+    });
     next();
   });
 };
@@ -22,11 +28,10 @@ var authenticate = (req, res, next) => {
 
   User.findByToken(token).then(user => {
     if (!user) return Promise.reject('User not found');
-
     req.user = user;
     req.token = token;
     next();
-  }).catch(e => res.status(401).send(e));
+  }).catch(e => res.status(401).send({e}));
 };
 
-module.exports = {authenticate, loggedin};
+module.exports = {authenticate, loggedin, defProps};

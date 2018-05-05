@@ -4,27 +4,29 @@ const {ObjectID} = require('mongodb');
 const _ = require('lodash');
 
 const {app} = require('./../server');
-const {renderPage} = require('./user-routes');
-const {authenticate, loggedin} = require('./../middleware/authenticate');
+const {authenticate, loggedin, defProps} = require('./../middleware/authenticate');
 
-var defProps = {};
+var renderPage = (res, link, options) => res.render(link, Object.assign(defProps, options));
+
+app.all('*', loggedin, (req, res, next) => {
+  next();
+});
 
 app.get('/', (req, res) => {
   renderPage(res, 'home.hbs', {
-    pageTitle: 'Home Page',
-    welcomeMessage: 'Welcome to a website!'
+    pageTitle: 'Excelsior, the education and curation platform that fits you | Excelsior Industries'
   });
 });
 
 app.get('/about', (req, res) => {
   renderPage(res, 'about.hbs', {
-    pageTitle: 'About Page'
+    pageTitle: 'About Excelsior Industries'
   });
 });
 
 app.get('/signup', (req, res) => {
   renderPage(res, 'createUser.hbs', {
-    pageTitle: 'Sign Up'
+    pageTitle: 'Sign Up a free account | Excelsior Industries'
   });
 });
 
@@ -38,3 +40,7 @@ app.get('/bad', (request, response) => {
     error_message: 'Unable to handle request'
   });
 });
+
+module.exports = {
+  renderPage
+};
