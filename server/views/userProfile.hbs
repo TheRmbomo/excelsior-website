@@ -3,21 +3,21 @@
   <head>
     <meta charset='utf-8'>
     {{#if hasName}}
-    <title>{{username}}</title>
+    <title>{{name}} - Excelsior Profile</title>
     {{else}}
-    <title>My Profile Page</title>
+    <title>My Profile Page - Excelsior Profile</title>
     {{/if}}
     {{> links}}
   </head>
   <body>
     {{> header}}
     {{#unless edit}}
-    <div>{{username}}{{#if private}} <a href='./edit'>Edit</a></div>{{/if}}
+    <div>{{name}}{{#if private}} <a href='./edit'>Edit</a></div>{{/if}}
     <div>{{{bio}}}</div>
     {{else}}
     <!-- If currently editing page. -->
     <form id="editProfile" action='/users/me' method="POST">
-      <div><input class="text center" type="text" name="name" value={{username}}></div>
+      <div><input class="text center" type="text" name="name" value="{{name}}"></div>
       <div><textarea class="text box" maxlength="2000" row=5 name="bio">{{bio}}</textarea></div>
       <div><input type="submit"></div>
     </form>

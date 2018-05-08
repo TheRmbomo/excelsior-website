@@ -24,7 +24,7 @@ $('#signup').on('submit', function (event) {
   .done((res, status, xhr) => {
     // console.log(res);
     var token = xhr.getResponseHeader('x-auth');
-    document.cookie = 'x-auth=' + token + ';path=/';
+    document.cookie = 'x-auth=' + token + ';path=/;HttpOnly;';
     $(location).attr("href", "/users/me");
   })
   .fail(e => console.log(e.responseText));

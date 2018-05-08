@@ -23,12 +23,13 @@ $('#login').on('submit', event => {
   })
   .done((res, status, xhr) => {
     var token = xhr.getResponseHeader('x-auth');
-    document.cookie = 'x-auth=' + token + ';path=/;';
+    document.cookie = 'x-auth=' + token + ';path=/;HttpOnly;';
     location.href = "/";
     $('#error-box').html('');
   })
   .fail(err => {
     var {error} = err.responseJSON;
+    console.log(err);
     $('#error-box').html(error);
   });
 });

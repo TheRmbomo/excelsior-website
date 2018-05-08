@@ -2,11 +2,30 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 const _ = require('lodash');
+const xss = require('xss');
 
 const {app} = require('./../server');
 const {User} = require('./../models/user');
-const {userProfile, userPrivateProfile} = require('./userProfile');
+// const {userProfile, userPrivateProfile} = require('./userProfile');
 const {authenticate, loggedin} = require('./../middleware/authenticate');
+const {renderPage} = require('./web-routes');
+
+// Calling profile page
+var userProfile = (res, user, {private = false, edit = false} = {}) => {
+  var {name, bio, email} = user;
+  renderPage(res, 'userProfile.hbs', {
+    private, edit,
+    hasName: (!!name),
+    name: (name || email),
+    bio
+  });
+};
+
+// For calling one's own private profile page
+var userPrivateProfile = (req, res, edit) => {
+  if (req.loggedIn) userProfile(res, req.user, {private: true, edit})
+  else res.redirect('/login');
+};
 
 app.get('/user/:id', loggedin, (req, res) => {
   var {id} = req.params;
@@ -63,12 +82,12 @@ app.get('/users/edit', loggedin, (req, res) => {
 
 app.post('/users/me', authenticate, (req, res) => {
   var subProfile = _.pick(req.body, ['name', 'bio']);
+  subProfile.bio = xss(subProfile.bio);
+  console.log(subProfile.bio);
   Object.assign(req.user, subProfile);
   return req.user.save()
-    .then(() => {
-      // res.send({message: 'User was updated successfully'});
-      res.redirect(303, '/users/me');
-    }).catch(e => res.status(400).send(e));
+    .then(() => res.redirect(303, '/users/me'))
+    .catch(e => res.redirect(303, '/users/me'));
 });
 
 app.delete('/logout', authenticate, (req, res) => {
