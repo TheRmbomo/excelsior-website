@@ -24,7 +24,46 @@ hbs.registerHelper('getCurrentYear', () => {
   return new Date().getFullYear();
 });
 
+hbs.registerHelper('compare', function(lvalue, operator, rvalue, options) {
+  var operators, result;
+
+  if (arguments.length < 3)
+    throw new Error("Handlerbars Helper 'compare' needs 2 parameters");
+
+  if (options === undefined) {
+    options = rvalue;
+    rvalue = operator;
+    operator = '===';
+  }
+
+  operators = {
+    '==':     (l,r) => l == r,
+    '===':    (l,r) => l === r,
+    '!=':     (l,r) => l != r,
+    '<':      (l,r) => l < r,
+    '>':      (l,r) => l > r,
+    '<=':     (l,r) => l <= r,
+    '>=':     (l,r) => l >= r,
+    'typeof': (l,r) => typeof l == r
+  }
+
+  if (!operators[operator])
+    throw new Error("Handlerbars Helper 'compare' doesn't know the operator "+operator);
+
+  result = operators[operator](lvalue,rvalue);
+  if (result)
+    return options.fn(this);
+  else
+    return options.inverse(this);
+});
+
+hbs.registerHelper('substring', function(passedString, start, end) {
+    var string = passedString.substring(start,end);
+    return new hbs.SafeString(string);
+});
+
 module.exports = {app};
 require('./routes/web-routes');
 require('./routes/user-routes');
+require('./routes/search-routes');
 require('./socketio');

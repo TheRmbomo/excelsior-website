@@ -1,39 +1,194 @@
+* {
+    box-sizing: border-box;
+    color: #BBBBBB;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  position: relative;
+  min-height: 100%;
+  background-color: #333333;
+}
+
+html, body {
+  margin: unset;
+}
+
+.unset {
+  margin: unset;
+  padding: unset;
+}
+
+header {
+  border-bottom: 2px solid #444460
+}
+  header h1 {
+    color: #CCCCCC;
+  }
+  header.background {
+    position: sticky;
+    top: 0;
+  }
+
 .top {
-  margin-top: 1em
+  padding-top: 1.75em;
 }
 
 .right {
-  float: right
+  float: right;
 }
 
 .island {
-  margin: auto
+  margin: auto;
 }
-
-.box {
-  margin: 5px
-}
-
-a {
-  color: #002F7F
-}
-
-  a:hover {
-    color: #2F4F9F
+  h2.island {
+    margin-top: 2.5%;
+    margin-left: 2.5%;
   }
 
+.box {
+  padding: 0.5em;
+}
+
+.distance {
+  margin-top: 1em;
+}
+
+.border {
+  border: 2px solid #AAAABB;
+}
+  tr.border {
+    border: unset;
+    border-bottom: 0.2em solid #FFFFFF00;
+  }
+    tr.border.head {
+      border-bottom: 0.2em solid #AAAABBFF;
+      margin-bottom: 2em;
+    }
+  tr.border>td {
+    overflow: auto;
+  }
+
+.background {
+  background-color: #444455;
+}
+  .background.dark {
+    background-color: #222222;
+  }
+  .background.lightblue {
+    background-color: #555566;
+  }
+    .lightblue.translucent {
+      background-color: #5555667F;
+    }
+
+a {
+  color: #4F6FBF;
+  text-decoration: none;
+}
+  a:hover {
+    color: #5F7FCF;
+  }
   a:active {
-    color: #4F6FBF
+    color: #4F6FBF;
   }
 
 .text {
-  font-family: Trebuchet, sans-serif;
+  font-family: "Trebuchet MS", sans-serif;
+}
+  .text.center {
+    text-align: center;
+  }
+  .text.right {
+    text-align: right;
+  }
+  .text.small {
+    font-size: 0.75em;
+  }
+  .text.big {
+    font-size: 1.5em;
+  }
+
+.row::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.column {
+  width: 50%;
+  padding: 1em;
+}
+  .column.fat {
+    width: 75%;
+  }
+  .row>.column {
+    float: left;
+  }
+  .video.column {
+    padding: unset;
+    margin: 2.5%;
+    margin-top: 2em;
+    width: 70%;
+  }
+  .video+.column {
+    margin-top: 2em;
+    width: 25%;
+  }
+  @media screen and (max-width: 600px) {
+    .column {
+      width: 100%;
+    }
+    .video.column {
+      margin: 2.5%;
+      width: 95%;
+    }
+    .video+.column {
+      width: 100%;
+    }
+  }
+
+.username {
+  vertical-align: top;
+}
+
+.field {
+  width: 100%;
+  padding: 0.5em;
+  border-collapse: collapse;
+  table-layout: fixed;
   font-size: 1em;
 }
 
-  .text.center {
-    text-align: center
-  }
-  .text.box {
-    width: 50%
-  }
+textarea {
+  background-color: #444455;
+  max-width: 100%;
+  border: unset;
+}
+
+input {
+  background-color: #444455;
+  border: unset;
+}
+
+canvas {
+  width: 100%;
+  height: 0;
+  padding-top: 30%;
+  padding-bottom: 30%;
+}
+
+video {
+  width: 100%;
+}
+
+footer {
+  position: absolute;
+  overflow: hidden;
+  height: 2em;
+  bottom: 0;
+  width: 100%;
+}

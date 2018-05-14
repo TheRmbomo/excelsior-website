@@ -2,30 +2,30 @@
 <html>
   <head>
     <meta charset='utf-8'>
-    <title>Login</title>
+    <title>Login | Excelsior</title>
     {{> links}}
   </head>
   <body>
     {{> header}}
-    <div id="error-box">
+    {{> pageJS js="login"}}
+    <div class="row">
+      <div class="column">
+        {{> signin}}
+      </div>
+      <div class="column">
+        <div class="center island column">
+          <h2 class="unset center text">What's New</h2>
+        </div>
+        <div class="border field">
+          <table class="field">
+            <tr>
+              <td>May 11th, 2018</td>
+              <td colspan=3>This site was made beautiful.</td>
+            </tr>
+          </table>
+        </div>
+      </div>
     </div>
-    <form id="login" method="post">
-      <table>
-        <tr>
-          <td>Email:</td>
-          <td><input type="text" name="email" autocomplete="on"></td>
-        </tr>
-        <tr>
-          <td>Password:</td>
-          <td><input type="password" name="password" autocomplete="on"></td>
-        </tr>
-      </table>
-      <input type="submit" value="Login">
-
-      <p>Don't have an account? Sign up <a href="/signup">here</a>.</p>
-
-    </form>
-    {{> pageJS js='login'}}
     {{> footer}}
   </body>
 </html>

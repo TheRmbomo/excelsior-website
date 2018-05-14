@@ -6,7 +6,6 @@ const xss = require('xss');
 
 const {app} = require('./../server');
 const {User} = require('./../models/user');
-// const {userProfile, userPrivateProfile} = require('./userProfile');
 const {authenticate, loggedin} = require('./../middleware/authenticate');
 const {renderPage} = require('./web-routes');
 
@@ -61,14 +60,22 @@ app.post('/login', (req, res) => {
   User.findByCredentials(email, password)
     .then(user => {
       return user.generateAuthToken()
-        .then(token => res.set('x-auth', token).send(user));
+        .then(token => {
+          res.cookie('x-auth', token, {
+            expires: new Date(Date.now() + 9999999),
+            domain: '.localhost',
+            path: '/'
+          });
+          res.redirect('/');
+        }).catch(e => console.log(e));
     })
     .catch(e => {
       res.status(401);
       if (e) return res.send(e);
-      var e = {};
-      if (!email || !password) e.message = 'Required field is missing';
-      res.send(e);
+      //
+      // var e = {};
+      // if (!email || !password) e.error = 'Required field is missing';
+      // res.send(e);
     });
 });
 

@@ -1,10 +1,14 @@
-<header>
+<header class="lightblue background {{#if translucent_header}}translucent{{/if}}">
   <div class="box">
     <span>
       <a class="box" href="/"><img src="" alt="Excelsior Industries"/></a>
-      {{#unless loggedIn}}
-        <a class="right box" href="/signup">Sign Up</a>
-        <a class="right box" href="/login">Login</a>
+      {{#unless loggedIn ~}}
+        {{#unless home ~}}
+          <a class="right box" href="/">Sign Up</a>
+        {{/unless}}
+        {{#unless login ~}}
+          <a class="right box" href="/login">Login</a>
+        {{/unless}}
       {{else}}
         {{> pageJS js='logout'}}
         <form id="logout" class="right box" method="delete">
@@ -16,7 +20,8 @@
     {{#if navigation}}
       {{> navigation}}
     {{/if}}
-    <h1>{{pageTitle}}</h1>
+    {{#if pageTitle}}
+    <h1 class="unset box">{{pageTitle}}</h1>
+    {{/if}}
   </div>
 </header>
-<hr>

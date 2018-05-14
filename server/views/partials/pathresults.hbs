@@ -1,0 +1,12 @@
+{{#each path.content as |video i|}}
+  {{#compare i "<" 10}}
+    <tr>
+      <td><a href='/video/{{this.id}}'>{{this.name}}</a></td>
+      <td class="right">{{this.description}}</td>
+    </tr>
+  {{else}}
+    <tr>
+      <td colspan=2><a>Show more videos</a></td>
+    </tr>
+  {{/compare}}
+{{/each}}

@@ -2,19 +2,25 @@
 <html>
   <head>
     <meta charset='utf-8'>
-    <title>{{pageTitle}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{pageTitle}} | Excelsior Industries</title>
     {{> links}}
   </head>
   <body>
-    {{> header pageTitle="Excelsior"}}
-    <p>Search users of the Excelsior community.</p>
-    <div class="top" id="error-box"></div>
-    <form id="searchUser">
-      <input type="search" name="name" placeholder="Search for usernames here..." autocomplete="off">
-      <input type="submit" size=100 maxlength="50" value="Search">
-    </form>
-    <div class="top" id="results"></div>
-    {{> pageJS js='home'}}
+    {{> header pageTitle="Welcome to Excelsior"}}
+    <div class="row">
+      <div class="column">
+        {{> pathview start="root" border=true}}
+        <a href="/paths">Paths of Learning - Placeholder</a>
+        <p class="border box">Description of Excelsior</p>
+      </div>
+      <div class="column">
+        {{> search}}
+        <hr>
+        {{> pageJS js="createUser"}}
+        {{> signin}}
+      </div>
+    </div>
     {{> footer}}
   </body>
 </html>

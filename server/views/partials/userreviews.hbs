@@ -1,0 +1,32 @@
+{{#if true}}
+  <form>
+    <tr>
+      <td class="background username">{{user.name}}</td>
+      <td colspan=2 class="background">
+        <textarea class="text field" placeholder="Type your review here..."></textarea>
+      </td>
+    </tr>
+    <tr class="unset border">
+      <td></td>
+      <td></td>
+      <td class="unset"><input class="right" type="submit" value="Send"></input></td>
+    </tr>
+  </form>
+{{/if}}
+{{#each path.userreviews as |ur i|}}
+  {{#compare i "<" 10}}
+    <tr class="border">
+      <td class="background username">{{this.user}}</td>
+      <td colspan=2 class="background">
+        {{#compare ur.review.length "<" ../threshold ~}}
+          {{ur.review}}
+        {{else}}
+          {{substring ur.review 0 ../threshold ~}}...
+          <a>Show more</a>
+        {{/compare}}
+      </td>
+    </tr>
+  {{else}}
+    <td><a>Show more reviews</a><td>
+  {{/compare}}
+{{/each}}

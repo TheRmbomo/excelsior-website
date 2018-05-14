@@ -54,7 +54,7 @@ UserSchema.methods.toJSON = function () {
   var user = this;
   var userObject = user.toObject();
 
-  return _.pick(userObject, ['_id', 'name']);
+  return _.pick(userObject, ['_id', 'email', 'name', 'nickname', 'level']);
 };
 
 UserSchema.methods.generateAuthToken = function () {
@@ -109,12 +109,10 @@ UserSchema.pre('save', function (next) {
     bcrypt.genSalt(10, (err, salt) => {
       bcrypt.hash(user.password, salt, (err, hash) => {
         user.password = hash;
-        next();
       });
     });
-  } else {
-    next();
   }
+  next();
 });
 
 var User = mongoose.model('User', UserSchema);

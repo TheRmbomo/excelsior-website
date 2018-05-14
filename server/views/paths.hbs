@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{pageTitle}} | Excelsior</title>
+    {{> links}}
+  </head>
+  <body>
+    {{> header pageTitle=""}}
+    {{#unless isPath}}
+      {{> pathview}}
+      <span><a href="/paths/explore">Explore</a></span>
+      <span> ~~~ </span>
+      <span><a href="/paths/testpath">Test Path</a></span>
+    {{else}}
+      <div class="row">
+        <div class="column">
+          <h1>{{path.name}}</h1>
+          <p>{{path.description}}</p>
+          <div class="border box">
+            <h2 class="text center">Approval Rating: {{rating}}</h2>
+            <table class="field">
+              <tr class="border head">
+                <th>Users</th>
+                <th colspan=2>Reviews</th>
+              </tr>
+              {{> userreviews threshold=200}}
+            </table>
+          </div>
+        </div>
+        <div class="column">
+          {{> pathview border=true}}
+          <div class="column island border">
+            <h2 class="text center">Path Content</h2>
+            <table class="field">
+              {{> pathresults}}
+            </table>
+          </div>
+        </div>
+      </div>
+    {{/unless}}
+    {{> footer}}
+  </body>
+</html>
