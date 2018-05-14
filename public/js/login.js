@@ -1,5 +1,24 @@
 var socket = io();
 
+var clearbox = box => box.css('background-color', '');
+
+var redbox = box => {
+  var rgb = box.css('background-color').replace(/[^\d,]/g, '').split(',');
+  var red = parseInt(rgb[0]),
+      green = parseInt(rgb[1]),
+      blue = parseInt(rgb[2]);
+  var i = setInterval(() => {
+    red += 16;
+    if (blue > 15) blue -= 16;
+    if (green > 15) green -= 16;
+    box.css({'background-color': `rgb(${red}, ${green}, ${blue})`});
+    if (red >= 160) {
+      setTimeout(() => clearbox(box), 100);
+      return clearInterval(i);
+    }
+  }, 10);
+};
+
 socket.on('connect', () => {
   $('#signin').on('submit', function (event) {
     event.preventDefault();
@@ -24,7 +43,10 @@ socket.on('connect', () => {
     })
     .fail(e => {
       console.log(e);
-      if (e.responseJSON.error) $('#error-signin').html(`${e.responseJSON.error}`);
+      if (e.responseJSON.error) {
+        $('#error-signin').html(`${e.responseJSON.error}`);
+        if (e.responseJSON.error === 'Invalid email') redbox($('#email'));
+      };
     });
   });
 });
