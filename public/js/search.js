@@ -14,7 +14,7 @@ $('#searchUser').on('submit', function (event) {
 
   socket.emit('searchUser', name, res => {
     var div = $('#results');
-    var err = $('#error-box');
+    var err = $('#error-search');
     div.empty();
     err.empty();
     res.forEach(user => {

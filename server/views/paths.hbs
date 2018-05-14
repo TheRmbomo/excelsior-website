@@ -19,7 +19,7 @@
           <h1>{{path.name}}</h1>
           <p>{{path.description}}</p>
           <div class="border box">
-            <h2 class="text center">Approval Rating: {{rating}}</h2>
+            <h2 class="center text">Approval Rating: {{rating}}</h2>
             <table class="field">
               <tr class="border head">
                 <th>Users</th>
@@ -31,8 +31,8 @@
         </div>
         <div class="column">
           {{> pathview border=true}}
-          <div class="column island border">
-            <h2 class="text center">Path Content</h2>
+          <div class="border island column">
+            <h2 class="center text">Path Content</h2>
             <table class="field">
               {{> pathresults}}
             </table>

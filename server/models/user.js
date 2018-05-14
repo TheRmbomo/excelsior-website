@@ -57,14 +57,20 @@ UserSchema.methods.toJSON = function () {
   return _.pick(userObject, ['_id', 'email', 'name', 'nickname', 'level']);
 };
 
-UserSchema.methods.generateAuthToken = function () {
+UserSchema.methods.generateAuthToken = function (res = null) {
   var user = this;
   var access = 'auth';
   var token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET).toString();
 
   if (user.tokens.length > 5) user.tokens.splice(0,1);
   user.tokens = user.tokens.concat([{access, token}]);
-  return user.save().then(() => token);
+  return user.save()
+    .then(() => res.cookie('x-auth', token, {
+      expires: new Date(Date.now() + 9999999),
+      path: '/',
+      httpOnly: true
+    }).send(user))
+    .catch(e => console.log(e));
 };
 
 UserSchema.methods.removeToken = function (token) {
@@ -93,11 +99,11 @@ UserSchema.statics.findByCredentials = function (email, password) {
   if (!validator.isEmail(email)) return Promise.reject({error: 'Invalid email'});
   return User.findOne({email: new RegExp('^'+email, 'i')})
     .then(user => {
-      if (!user) return Promise.reject({error: 'User not found'});
+      if (!user) return Promise.reject({error: 'Incorrect authentication'});
       return new Promise((resolve, reject) => {
         bcrypt.compare(password, user.password, (err, res) => {
           if (res) resolve(user);
-          else reject({error: 'Incorrect password'});
+          else reject({error: 'Incorrect authentication'});
         });
       })
     });
@@ -108,11 +114,12 @@ UserSchema.pre('save', function (next) {
   if (user.isModified('password')) {
     bcrypt.genSalt(10, (err, salt) => {
       bcrypt.hash(user.password, salt, (err, hash) => {
+        if (err) return next(err);
         user.password = hash;
+        return next();
       });
     });
-  }
-  next();
+  } else return next();
 });
 
 var User = mongoose.model('User', UserSchema);

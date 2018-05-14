@@ -49,8 +49,7 @@ app.post('/signup', (req, res) => {
   var user = new User(_.pick(req.body, ['email', 'password']));
 
   user.save()
-    .then(() => user.generateAuthToken())
-    .then(token => res.header('x-auth', token).send(user))
+    .then(() => user.generateAuthToken(res))
     .catch(e => res.status(400).send(e));
 });
 
@@ -58,25 +57,8 @@ app.post('/login', (req, res) => {
   var {email, password} = _.pick(req.body, ['email', 'password']);
 
   User.findByCredentials(email, password)
-    .then(user => {
-      return user.generateAuthToken()
-        .then(token => {
-          res.cookie('x-auth', token, {
-            expires: new Date(Date.now() + 9999999),
-            domain: '.localhost',
-            path: '/'
-          });
-          res.redirect('/');
-        }).catch(e => console.log(e));
-    })
-    .catch(e => {
-      res.status(401);
-      if (e) return res.send(e);
-      //
-      // var e = {};
-      // if (!email || !password) e.error = 'Required field is missing';
-      // res.send(e);
-    });
+    .then(user => user.generateAuthToken(res))
+    .catch(e => res.status(401).send(e));
 });
 
 app.get('/users/me', (req, res) => {

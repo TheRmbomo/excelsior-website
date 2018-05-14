@@ -16,8 +16,7 @@ app.all('*', loggedin, (req, res, next) => {
 app.get('/', (req, res) => {
   renderPage(res, 'home.hbs', {
     pageTitle: 'Excelsior, the education and curation platform that fits you',
-    home: true,
-    action: 'Sign Up'
+    home: true
   });
 });
 
@@ -30,8 +29,7 @@ app.get('/about', (req, res) => {
 app.get('/login', loggedin, (req, res) => {
   if (!req.loggedIn)
     renderPage(res, 'login.hbs', {
-      login: true,
-      action: 'Login'
+      login: true
     });
   else res.redirect('/users/me');
 });
