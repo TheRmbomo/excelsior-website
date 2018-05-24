@@ -8,6 +8,8 @@
   </head>
   <body>
     {{> header pageTitle="Welcome to Excelsior"}}
+    {{> search}}
+    <hr>
     <div class="row">
       <div class="column">
         {{> pathview start="root" border=true}}
@@ -15,8 +17,6 @@
         <p class="border box">Description of Excelsior</p>
       </div>
       <div class="column">
-        {{> search}}
-        <hr>
         {{> pageJS js="createUser"}}
         {{> signin action="/signup" text="Sign Up"}}
       </div>

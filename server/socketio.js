@@ -1,15 +1,17 @@
 const http = require('http');
+// const https = require('https');
+const fs = require('fs');
 const socketIO = require('socket.io');
 
 const {app} = require('./server');
 const {User} = require('./models/user');
+const httpPort = 3000;
 
-const port = process.env.PORT || 80;
-var server = http.createServer(app);
-var io = socketIO(server);
+var httpServer = http.createServer(app);
+
+var io = socketIO(httpServer);
 
 io.on('connection', socket => {
-
   socket.on('searchUser', (name, send) => {
     // send is callback, sends back to client
     if (!name) return send([{error: 'Please enter a name.'}]);
@@ -22,6 +24,4 @@ io.on('connection', socket => {
   });
 });
 
-server.listen(port, '0.0.0.0', undefined, () => {
-  console.log(`Server is up on port ${port}`);
-});
+httpServer.listen(httpPort, '0.0.0.0', undefined, () => console.log(`Http server is up on port ${httpPort}`));

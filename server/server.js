@@ -64,6 +64,7 @@ hbs.registerHelper('substring', function(passedString, start, end) {
 
 module.exports = {app};
 require('./routes/web-routes');
+require('./routes/chatbot-routes');
 require('./routes/user-routes');
 require('./routes/search-routes');
 require('./socketio');

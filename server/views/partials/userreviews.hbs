@@ -16,7 +16,7 @@
 {{#each path.userreviews as |ur i|}}
   {{#compare i "<" 10}}
     <tr class="border">
-      <td class="background username">{{this.user}}</td>
+      <td class="background username">{{ur.username}}</td>
       <td colspan=2 class="background">
         {{#compare ur.review.length "<" ../threshold ~}}
           {{ur.review}}

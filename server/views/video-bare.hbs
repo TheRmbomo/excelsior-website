@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{video.name}} | Excelsior</title>
+    {{> links}}
+  </head>
+  <body>
+    <div class="row">
+      <div class="video column">
+        <img class="ratio" src="/16x9.png"/>
+        <iframe class="dark background" src="{{video.url}}" frameborder="0" allowfullscreen></iframe>
+      </div>
+    </div>
+    {{> footer}}
+  </body>
+</html>
