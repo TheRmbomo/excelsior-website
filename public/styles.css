@@ -30,6 +30,7 @@ header {
   }
   header.background {
     position: sticky;
+    z-index: 1;
     top: 0;
   }
 
@@ -97,8 +98,11 @@ a {
   }
 
 .text {
-  font-family: "Trebuchet MS", sans-serif;
+  font-family: "Cabin", sans-serif;
 }
+  h1.text {
+    font-weight: 400;
+  }
   .text.center {
     text-align: center;
   }
@@ -155,7 +159,7 @@ a {
     }
   }
 
-.username {
+.atop {
   vertical-align: top;
 }
 

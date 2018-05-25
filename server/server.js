@@ -24,6 +24,25 @@ hbs.registerHelper('getCurrentYear', () => {
   return new Date().getFullYear();
 });
 
+hbs.registerHelper('eachs', function(context, sentinel, options) {
+  var data = undefined,
+      ret = "";
+  if (options.data) {
+    data = hbs.Utils.createFrame(options.data);
+  }
+
+  if (context && typeof context === 'object') {
+    if (hbs.Utils.isArray(context))
+      for (let i=0; i<context.length; i++) {
+        if (data) data.index = i;
+        if (this[sentinel]) break;
+        ret = ret + options.fn(context[i], {data});
+      }
+    else console.log('Not an array');
+  }
+  return ret;
+});
+
 hbs.registerHelper('compare', function(lvalue, operator, rvalue, options) {
   var operators, result;
 
@@ -58,8 +77,15 @@ hbs.registerHelper('compare', function(lvalue, operator, rvalue, options) {
 });
 
 hbs.registerHelper('substring', function(passedString, start, end) {
-    var string = passedString.substring(start,end);
-    return new hbs.SafeString(string);
+  var string = passedString.substring(start,end);
+  return new hbs.SafeString(string);
+});
+
+hbs.registerHelper('set', function(variable, value, options) {
+  if (arguments.length < 3)
+    throw new Error('Helper \'set\' needs 2 parameters');
+
+  options.data.root[variable] = value;
 });
 
 module.exports = {app};

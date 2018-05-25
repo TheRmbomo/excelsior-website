@@ -74,28 +74,9 @@ app.get('/paths/:pathid/:videoid', (req, res) => {
   }).catch(e => res.send(e));
 });
 
-// app.get('/video/:id', (req, res) => {
-//   let {id} = req.params;
-//   console.log(ObjectId(id));
-//   Path.findOne({'content._id': ObjectId(id)}).then(path => {
-//     if (!path) return renderPage(res, 'notfound.hbs', {});
-//     let video;
-//     for (let i = 0; i < path.content.length; i++) {
-//       if (path.content[i]._id === ObjectId(id)) {
-//         video = path.content[i];
-//         break;
-//       }
-//       else if (i === path.content.length - 1) return Promise.reject('ID Not Found');
-//     }
-//     renderPage(res, 'video.hbs', {
-//       videoTitle: video.name,
-//       translucent_header: true,
-//       path: video.path,
-//       content: path.content,
-//       url: video.url
-//     });
-//   }).catch(e => res.send(e));
-// });
+app.get('/video/:id', (req, res) => {
+  let {id} = req.params;
+});
 
 module.exports = {
   renderPage
