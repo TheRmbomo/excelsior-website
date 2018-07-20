@@ -1,37 +1,24 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset='utf-8'>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{video.name}} | Excelsior</title>
-    {{> links}}
-  </head>
-  <body>
-    {{> header}}
-    <h2 class="island">{{video.name}} | {{path.name}}</h2>
-    <div class="row">
-      <div class="wide video column">
-        <img class="ratio" src="/16x9.png"/>
-        <iframe class="dark background" src="{{video.url}}" frameborder="0" allowfullscreen></iframe>
-        <div class="lightblue background column">
-          <h2 class="unset center text">Video Source</h2>
-          <a>Watch here on YouTube</a>
-          <a class="right">Subscribe to the uploader!</a>
-        </div>
-      </div>
-      <div class="thin column">
-        <div class="lightblue background box">
-          <h2 class="center text"><a href="/paths/{{path._id}}">{{path.name}}</a></h2>
-          {{> pathresults}}
-        </div>
-        <form class="lightblue background text box distance">
-          <h2 class="center text">Give Feedback</h2>
-          <label for="thoughts" class="box">What did you think of this video?</label>
-          <textarea id="thoughts" class="text field"></textarea>
-          <input type="submit" value="Send"></input>
-        </form>
-      </div>
+<h2 class="island">{{video.name}} | {{path.name}}</h2>
+<div class="row">
+  <div class="wide video column">
+    <img class="ratio" src="/16x9.png"/>
+    <iframe class="dark background" src="{{video.url}}" frameborder="0" allowfullscreen></iframe>
+    <div class="lightblue background column">
+      <h2 class="unset center text">Video Source</h2>
+      <a>Watch here on YouTube</a>
+      <a class="right">Subscribe to the uploader!</a>
     </div>
-    {{> footer}}
-  </body>
-</html>
+  </div>
+  <div class="thin column">
+    <div class="lightblue background box">
+      <h2 class="center text"><a href="/paths/{{path._id}}">{{path.name}}</a></h2>
+      {{> pathresults}}
+    </div>
+    <form class="lightblue background text box distance">
+      <h2 class="center text">Give Feedback</h2>
+      <label for="thoughts" class="box">What did you think of this video?</label>
+      <textarea id="thoughts" class="text field"></textarea>
+      <input type="submit" value="Send"></input>
+    </form>
+  </div>
+</div>

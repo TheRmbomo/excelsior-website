@@ -1,1 +1,1 @@
-nodemon -e hbs,css,js ".\server\server.js"
+nodemon -e hbs,css,js ".\server\app.js"

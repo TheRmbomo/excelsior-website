@@ -66,7 +66,7 @@ require('./routes/user-routes');
 // require('./routes/chatbot-routes');
 
 app.get('/not-found', (req, res) => {
-  res.render('misc/not_found.hbs', {
+  res.render('misc/not_found', {
     title: 'Resource not found'
   });
 });

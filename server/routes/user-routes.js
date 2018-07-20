@@ -9,7 +9,7 @@ const passport = require('passport');
 const uuid = require('uuid/v4');
 const uuidParse = require('uuid-parse').parse;
 
-const {app} = require('./../server');
+const {app} = require('./../app');
 const {pgQuery} = require('./../db/pg');
 const {shortenId, loginCB} = require('./../middleware/passport');
 
@@ -76,7 +76,7 @@ app.get('/login-user', (req, res) => {
 
 app.get('/login', (req, res) => {
   console.log('req.session.passport =', req.session.passport);
-  res.render('login.hbs', {
+  res.render('login', {
     title: 'Sign-in'
   });
 });
@@ -96,7 +96,7 @@ app.get('/users', async (req, res, next) => {
   });
   data.users = q.rows;
 
-  res.render('multi-list.hbs', {
+  res.render('multilist', {
     title: 'Multiple Results',
     data
   });
@@ -172,7 +172,7 @@ userRouter.get('/', async (req, res, next) => {
   let user = req.viewedUser;
   if (!user) return next();
 
-  res.render('user_profile.hbs');
+  res.render('user_profile');
 });
 
 userRouter.get('/edit', (req, res, next) => {

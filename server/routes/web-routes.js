@@ -1,38 +1,13 @@
 const express = require('express');
 const valid = require('validator');
 
-const {app} = require('./../server');
+const {app} = require('./../app');
 const {pgQuery} = require('./../db/pg');
 const {Path} = require('./../models/path');
 const {Resource} = require('./../models/resource');
 
-// app.all('*', (req, res, next) => {
-//   // req.user = {
-//   //   emails: ['paul@marketinggen.com'],
-//   //   img: '/img/paul.png',
-//   //   username: 'PaulTok',
-//   //   display_name: 'Paul Tokgozoglu',
-//   //   first_name: 'Paul',
-//   //   last_name: 'Tokgozoglu',
-//   //   location: 'St. Robert, MO',
-//   //   bio: 'Confused about how to start a business? Join the FREE BETA for our AI and it’ll help',
-//   //   quote: '\"if they could see on my face what i feel in my heart, no one would ever fight me.\" -Yasuhiro Yamashita.',
-//   //   friends: [],
-//   //   created_date: '2018-07-11 07:52:01.361267',
-//   //   avatar: 'paul.png'
-//   // }
-//   if (req.loggedIn) Object.assign(app.locals, {
-//     'user-avatar': `/img/${req.user.avatar || 'default_avatar.png'}`,
-//     'logged-in': true
-//   });
-//   else Object.assign(app.locals, {
-//     'logged-in': false
-//   });
-//   next();
-// });
-
 app.get('/', (req, res) => {
-  res.render('index.hbs', {
+  res.render('index', {
     title: 'Excelsior, the education and curation platform that fits you',
     message: 'Welcome to Excelsior'
   });
@@ -43,7 +18,7 @@ app.get('/path/', (req, res) => {
 });
 
 app.get('/paths', (req, res) => {
-  res.render('paths.hbs', {
+  res.render('paths', {
     title: 'Paths of Learning',
     translucent_header: true
   });

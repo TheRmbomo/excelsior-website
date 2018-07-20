@@ -7,7 +7,7 @@ const scrypt = require('scrypt');
 const uuidParse = require('uuid-parse').parse;
 const xor = require('buffer-xor');
 
-const {app} = require('./../server');
+const {app} = require('./../app');
 const {pgQuery} = require('./../db/pg');
 
 app

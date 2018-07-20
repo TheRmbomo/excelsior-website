@@ -1,47 +1,37 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    {{> head}}
-  </head>
-  <body>
-    {{> header}}
-    <div class="island center round background overflow" style="margin-top: 1em; height: 75vh; min-width: 600px;">
-      <div class="fullwidth round light background" style="line-height: 2em;">
-        You have used {{taken_space}} MB so far.
-        <br>
-        You have {{remaining_space}} MB left.
-      </div>
-      <form class="half island" enctype="multipart/form-data" action="/upload-file" method="post">
-        <input type="file" name="file">
-        <input type="submit" name="" value="Upload">
-      </form>
-      <div class="fullwidth lock table overflow" style="table-layout: auto;">
-        <div class="lock tr light background">
-          <span class="lock round td padding" style="width: 60px;">Image</span>
-          <div class="lock round td padding" style="min-width: 125px; max-width: 250px;">Name</div>
-          <span class="lock round td padding" style="min-width: 5em;">Size</span>
-          <span class="lock round td padding" style="width: 8em;">Created At</span>
-          <span class="extra lock round td padding" style="width: 5em;">Times Accessed</span>
-          <span class="extra lock round td padding" style="width: 8em;">Last Accessed</span>
-          <span class="lock round td padding" style="width: 5em;"></span>
-          <span class="lock round td padding" style="width: 4em;"></span>
-        </div>
-        {{#each files}}
-        <form class="lock tr" action="/delete-file" method="post">
-          <input type="hidden" name="image_id" value="{{image_id}}">
-          <input type="hidden" name="file_name" value="{{path}}">
-          <img class="island lock td" src="{{path}}" alt="file" width="60" height="60">
-          <div class="lock td">{{name}}</div>
-          <span class="lock td">{{size}}</span>
-          <span class="lock td">{{created_at}}</span>
-          <span class="extra lock td">{{times_accessed}}</span>
-          <span class="extra lock td">{{last_accessed}}</span>
-          <span class="lock td"><input class="dark background overflow" type="submit" name="change-avatar" value="Set as Avatar"></span>
-          <span class="lock td"><input class="dark background" type="submit" value="Delete"></span>
-        </form>
-        {{/each}}
-      </div>
+<div class="island center round background overflow" style="margin-top: 1em; height: 75vh; min-width: 600px;">
+  <div class="fullwidth round light background" style="line-height: 2em;">
+    You have used {{taken_space}} MB so far.
+    <br>
+    You have {{remaining_space}} MB left.
+  </div>
+  <form class="half island" enctype="multipart/form-data" action="/upload-file" method="post">
+    <input type="file" name="file">
+    <input type="submit" name="" value="Upload">
+  </form>
+  <div class="fullwidth lock table overflow" style="table-layout: auto;">
+    <div class="lock tr light background">
+      <span class="lock round td padding" style="width: 60px;">Image</span>
+      <div class="lock round td padding" style="min-width: 125px; max-width: 250px;">Name</div>
+      <span class="lock round td padding" style="min-width: 5em;">Size</span>
+      <span class="lock round td padding" style="width: 8em;">Created At</span>
+      <span class="extra lock round td padding" style="width: 5em;">Times Accessed</span>
+      <span class="extra lock round td padding" style="width: 8em;">Last Accessed</span>
+      <span class="lock round td padding" style="width: 5em;"></span>
+      <span class="lock round td padding" style="width: 4em;"></span>
     </div>
-    {{> footer}}
-  </body>
-</html>
+    {{#each files}}
+    <form class="lock tr" action="/delete-file" method="post">
+      <input type="hidden" name="image_id" value="{{image_id}}">
+      <input type="hidden" name="file_name" value="{{path}}">
+      <img class="island lock td" src="{{path}}" alt="file" width="60" height="60">
+      <div class="lock td">{{name}}</div>
+      <span class="lock td">{{size}}</span>
+      <span class="lock td">{{created_at}}</span>
+      <span class="extra lock td">{{times_accessed}}</span>
+      <span class="extra lock td">{{last_accessed}}</span>
+      <span class="lock td"><input class="dark background overflow" type="submit" name="change-avatar" value="Set as Avatar"></span>
+      <span class="lock td"><input class="dark background" type="submit" value="Delete"></span>
+    </form>
+    {{/each}}
+  </div>
+</div>
