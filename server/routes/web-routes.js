@@ -1,83 +1,102 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const {ObjectId} = require('mongodb');
-const _ = require('lodash');
+const valid = require('validator');
 
 const {app} = require('./../server');
+const {pgQuery} = require('./../db/pg');
 const {Path} = require('./../models/path');
 const {Resource} = require('./../models/resource');
-const {authenticate, loggedin, defProps} = require('./../middleware/authenticate');
 
-var renderPage = (res, link, options) => res.render(link, Object.assign({}, defProps, options));
-
-app.all('*', loggedin, (req, res, next) => {
-  next();
-});
+// app.all('*', (req, res, next) => {
+//   // req.user = {
+//   //   emails: ['paul@marketinggen.com'],
+//   //   img: '/img/paul.png',
+//   //   username: 'PaulTok',
+//   //   display_name: 'Paul Tokgozoglu',
+//   //   first_name: 'Paul',
+//   //   last_name: 'Tokgozoglu',
+//   //   location: 'St. Robert, MO',
+//   //   bio: 'Confused about how to start a business? Join the FREE BETA for our AI and it’ll help',
+//   //   quote: '\"if they could see on my face what i feel in my heart, no one would ever fight me.\" -Yasuhiro Yamashita.',
+//   //   friends: [],
+//   //   created_date: '2018-07-11 07:52:01.361267',
+//   //   avatar: 'paul.png'
+//   // }
+//   if (req.loggedIn) Object.assign(app.locals, {
+//     'user-avatar': `/img/${req.user.avatar || 'default_avatar.png'}`,
+//     'logged-in': true
+//   });
+//   else Object.assign(app.locals, {
+//     'logged-in': false
+//   });
+//   next();
+// });
 
 app.get('/', (req, res) => {
-  renderPage(res, 'home.hbs', {
-    pageTitle: 'Excelsior, the education and curation platform that fits you',
-    home: true
+  res.render('index.hbs', {
+    title: 'Excelsior, the education and curation platform that fits you',
+    message: 'Welcome to Excelsior'
   });
 });
 
-app.get('/about', (req, res) => {
-  renderPage(res, 'about.hbs', {
-    pageTitle: 'About Excelsior Industries'
-  });
-});
-
-app.get('/login', loggedin, (req, res) => {
-  if (!req.loggedIn)
-    renderPage(res, 'login.hbs', {
-      login: true
-    });
-  else res.redirect('/users/me');
+app.get('/path/', (req, res) => {
+  res.redirect('/paths');
 });
 
 app.get('/paths', (req, res) => {
-  renderPage(res, 'paths.hbs', {
-    pageTitle: 'Paths of Learning',
+  res.render('paths.hbs', {
+    title: 'Paths of Learning',
     translucent_header: true
   });
 });
 
-app.get('/paths/explore', (req, res) => {
-  renderPage(res, 'explore.hbs', {
-  });
+app.get('/unset-ext', (req, res) => {
+  pgQuery('UPDATE users SET external_ids=DEFAULT WHERE id=\'c557cedc-c534-4c87-9b45-1794564e675e\';');
+  res.redirect('back')
 });
 
-app.get('/paths/:id', (req, res) => {
-  var {id} = req.params;
-  Path.findById(id).then(path => {
-    if (!path) return renderPage(res, 'notfound.hbs', {});
-    renderPage(res, 'paths.hbs', {
-      isPath: true,
-      pageTitle: path.name,
-      rating: `${Math.floor(path.rating*100)}%`,
-      path
-    });
-  }).catch(e => {
-    renderPage(res, 'notfound.hbs', {});
-  });
-});
+app.get('/path/:id', async (req, res, next) => {
+  var {id} = req.params, q;
 
-app.get('/paths/:pathid/:videoid', (req, res) => {
-  let {pathid, videoid} = req.params;
-  Path.findById(pathid).then(path => {
-    if (!path) return renderPage(res, 'notfound.hbs', {});
-    let video = path.content.id(videoid);
-    renderPage(res, 'video-bare.hbs', {
-      translucent_header: true,
-      path, video
-    });
-  }).catch(e => res.send(e));
-});
+  // if (q.length === 1) {
+  //   q = q[0];
+  //   let {display_name} = q;
+  //   return res.render('paths.hbs', {
+  //     isPath: true,
+  //     path: {display_name}
+  //   });
+  // } else if (q.length > 1) {
+  //   // Which one did you mean?
+  // } else {
+  //   console.log('not found');
+  // }
+  // let q = await pgQuery('INSERT INTO paths (name, display_name) values (\'mindset\',\'Mindset\')');
+  // res.render('paths.hbs', {
+  //   isPath: true
+  // });
 
-app.get('/video/:id', (req, res) => {
-  let {id} = req.params;
+  next();
 });
-
-module.exports = {
-  renderPage
-};
+//
+// app.get('/paths/:pathid/:videoid', (req, res) => {
+//   let {pathid, videoid} = req.params;
+//   Path.findById(pathid).then(path => {
+//     if (!path) return req.renderPage('notfound.hbs', {});
+//     let video = path.content.id(videoid);
+//     req.renderPage('video-bare.hbs', {
+//       translucent_header: true,
+//       path, video
+//     });
+//   }).catch(e => res.send(e));
+// });
+//
+// app.get('/video/:id', (req, res) => {
+//   let {id} = req.params;
+// });
+//
+// app.get('/not_found', (req, res) => {
+//   req.renderPage('notfound.hbs')
+// });
+//
+// app.get(process.env.EXCADMIN_PAGE, (req, res) => {
+//   req.renderPage('admin.hbs', {});
+// });

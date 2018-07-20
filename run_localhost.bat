@@ -1,0 +1,1 @@
+nodemon -e hbs,css,js ".\server\server.js"

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {{> head}}
+  </head>
+  <body>
+    {{> header}}
+    {{#if edit}}<form action="/edit-profile" method="post">{{/if}}
+    <div class="fullwidth table padding">
+      {{! Image and Name}}
+      <div class="tr">
+        <div class="lock td center relative" style="width: 20em;">
+          <img class="round" src="{{user.avatar_path}}" width="150" height="150"/>
+          {{#if ownPage}}
+          <div class="absolute" style="top: unset; left: unset; bottom: 0; right: 0;">
+            <a href="/my-files"><button type="button" name="button">Change Image</button></a>
+          </div>
+          {{/if}}
+        </div>
+        <div class="td center round background padding aligntop" style="overflow-x: hidden; height: auto;">
+          {{#if edit}}
+          <div class="round island half">
+            <span>Display Name:</span>
+            <input type="text" name="display_name" value="{{user.display_name}}">
+          </div>
+          {{else}}<h1 class="unset padding">{{user.display_name}}</h1>{{/if}}{{#if ownPage}}<a {{#if edit}}href='/user/{{user.url}}'>Stop editing{{else}}href='/user/{{user.url}}/edit'>Edit{{/if}}</a>{{/if}}
+        </div>
+        {{#if edit}}
+        <div class="td center round background padding aligntop">
+          <div class="island half">
+            <span>Username:</span>
+            <input type="text" name="username" placeholder="Username:" value="{{user.username}}"/>
+          </div>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+    <div class="fullwidth table padding">
+      <div class="round tr">
+        <div class="td" style="width: 40%; vertical-align: top;">
+          {{! Stats / Skills}}
+          {{!--
+          <div class="round border dark background" style="margin-bottom: 5px;">
+            <h2 class="unset center text padding">Stats / Skills</h2>
+            <hr>
+            <div class="lock table padding">
+              <div class="lock tr">
+                Entrepreneurship:
+              </div>
+              <div class="lock tr">
+                Mindset:
+              </div>
+              <div class="lock tr">
+                Fitness:
+              </div>
+            </div>
+          </div>
+          --}}
+          {{! Personal Information}}
+          <div class="round border dark background"  style="margin-bottom: 5px;">
+            <h2 class="unset center text padding">About</h2>
+            <hr>
+            <div class="lock fullwidth table padding">
+              {{#with user}}
+                <div class="lock tr">
+                  <span class="lock td" style="width: 8em;">Name:</span>
+                  {{#if ../edit}}
+                  <input type="text" name="first_name" placeholder="First Name:" value="{{first_name}}" style="margin-right: 5px; margin-bottom: 5px;"/>
+                  <input type="text" name="last_name" placeholder="Last Name:" value="{{last_name}}"/>
+                  {{else}}
+                  <span class="lock td">{{first_name}}{{#if last_name}} {{last_name}}{{/if}}</span>
+                  {{/if}}
+                </div>
+                {{!--
+                <div class="lock tr">
+                  <span class="lock td">Location:</span>
+                  {{#if ../edit}}
+                  <input type="text" name="location" placeholder="Location:" value="{{location}}"/>
+                  {{else}}
+                  <span class="lock td">{{location}}</span>
+                  {{/if}}
+                </div>
+                --}}
+                <div class="lock tr">
+                  <span class="lock td">Joined Excelsior:</span>
+                  <span class="lock td">{{created_date}}</span>
+                </div>
+              {{/with}}
+            </div>
+          </div>
+          {{! Comments}}
+          {{!--
+          <div class="round border dark background center text">
+            <h2 class="unset center text padding">Comments</h2>
+            <hr>
+            {{> response_field response-text="Comment here..."}}
+            <div class="lock table fullwidth padding">
+              <div class="lock tr">
+                <div class="lock td">
+                  Assassin:
+                </div>
+                <div class="lock td">
+                  Cool
+                </div>
+              </div>
+            </div>
+          </div>
+          --}}
+        </div>
+        <div class="td" style="vertical-align: top;">
+          {{! Bio}}
+          {{!--
+          <div class="round border dark background" style="margin-bottom: 5px; min-height: 20em;">
+            <h2 class="unset center text padding">Bio</h2>
+            <hr>
+            {{#if edit}}
+            {{> response_field placeholder="Describe yourself" value=user.bio}}
+            {{else}}
+            <div class="padding">
+              {{user.bio}}
+              <br><br>
+              <em>{{user.quote}}</em>
+            </div>
+            {{/if}}
+          </div>
+          --}}
+          {{! Activity}}
+          {{!--
+          <div class="round border dark background" style="margin-bottom: 5px; min-height: 12em;">
+            <h2 class="unset center text padding">Activity</h2>
+            <hr>
+            <div class="padding">
+              Completed Path of Learning!: Mindset <a>Congratulate him!</a>
+            </div>
+          </div>
+          --}}
+        </div>
+      </div>
+    </div>
+    {{#if edit}}
+    <input class="floatright margin" type="submit" value="Save">
+    </form>
+    {{/if}}
+    {{> footer}}
+  </body>
+</html>

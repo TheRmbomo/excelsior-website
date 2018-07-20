@@ -1,96 +1,78 @@
 require('./config/config');
 
-const path = require ('path');
+const path = require('path');
+const http = require('http');
 const express = require('express');
-const bodyParser = require('body-parser');
-const hbs = require('hbs');
-const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const RedisStore = require('connect-redis')(session);
+const passport = require('passport');
 // const fs = require('fs');
 
-require('./db/mongoose');
-
-const public = path.join(__dirname + '/../public');
-var app = express();
-
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(bodyParser.json());
-app.use(express.static(public));
-app.use(cookieParser())
-app.set('views', path.join(__dirname + '/views'));
-app.set('view engine', 'hbs');
-hbs.registerPartials(path.join(__dirname + '/views/partials'));
-
-hbs.registerHelper('getCurrentYear', () => {
-  return new Date().getFullYear();
-});
-
-hbs.registerHelper('eachs', function(context, sentinel, options) {
-  var data = undefined,
-      ret = "";
-  if (options.data) {
-    data = hbs.Utils.createFrame(options.data);
+var app = express()
+.set('views', path.join(__dirname + '/views'))
+// .use(express.json())
+// .use(express.urlencoded({extended: true}))
+.use(session({
+  store: new RedisStore({
+    port: 6379,
+    host: 'www.excelsiorindustries.com',
+    pass: process.env.REDIS
+  }),
+  resave: false,
+  saveUninitialized: false,
+  secret: process.env.COOKIE_SECRET,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24,
+    secure: false
   }
-
-  if (context && typeof context === 'object') {
-    if (hbs.Utils.isArray(context))
-      for (let i=0; i<context.length; i++) {
-        if (data) data.index = i;
-        if (this[sentinel]) break;
-        ret = ret + options.fn(context[i], {data});
-      }
-    else console.log('Not an array');
+}))
+.use((req, res, next) => {
+  req.format_date = (date, useTime) => {
+    for (var i=1, array=[]; array.push(i), i<31; i++);
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May',
+    'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    suffix = array.map(i => {
+      let mod = i % 10, suffix = ['st','nd','rd'];
+      return (Math.floor(i/10) !== 1 && mod > 0 && mod < 4) ? suffix[mod-1] : 'th';
+    });
+    date = `${months[date.getMonth()]} ${date.getDate()}${suffix[date.getDate()-1]},
+    ${date.getFullYear()}${(useTime) ? ` ${date.getHours()}` : ''}`;
+    return date;
   }
-  return ret;
+  next()
+})
+
+const httpPort = 3000;
+var httpServer = http.createServer(app);
+
+module.exports = {app, httpServer};
+require('./routes/public-routes');
+require('./middleware/passport');
+require('./middleware/handlebars.js');
+
+// require('./db/mongoose');
+require('./db/pg');
+
+Object.assign(app.locals, {
+  title: '',
+  navigation: true,
+  absolutePath: path.join(__dirname, '..')
 });
 
-hbs.registerHelper('compare', function(lvalue, operator, rvalue, options) {
-  var operators, result;
-
-  if (arguments.length < 3)
-    throw new Error("Handlerbars Helper 'compare' needs 2 parameters");
-
-  if (options === undefined) {
-    options = rvalue;
-    rvalue = operator;
-    operator = '===';
-  }
-
-  operators = {
-    '==':     (l,r) => l == r,
-    '===':    (l,r) => l === r,
-    '!=':     (l,r) => l != r,
-    '<':      (l,r) => l < r,
-    '>':      (l,r) => l > r,
-    '<=':     (l,r) => l <= r,
-    '>=':     (l,r) => l >= r,
-    'typeof': (l,r) => typeof l == r
-  }
-
-  if (!operators[operator])
-    throw new Error("Handlerbars Helper 'compare' doesn't know the operator "+operator);
-
-  result = operators[operator](lvalue,rvalue);
-  if (result)
-    return options.fn(this);
-  else
-    return options.inverse(this);
-});
-
-hbs.registerHelper('substring', function(passedString, start, end) {
-  var string = passedString.substring(start,end);
-  return new hbs.SafeString(string);
-});
-
-hbs.registerHelper('set', function(variable, value, options) {
-  if (arguments.length < 3)
-    throw new Error('Helper \'set\' needs 2 parameters');
-
-  options.data.root[variable] = value;
-});
-
-module.exports = {app};
 require('./routes/web-routes');
-require('./routes/chatbot-routes');
 require('./routes/user-routes');
-require('./routes/search-routes');
-require('./socketio');
+// require('./routes/search-routes');
+// require('./websockets');
+// require('./routes/chatbot-routes');
+
+app.get('/not-found', (req, res) => {
+  res.render('misc/not_found.hbs', {
+    title: 'Resource not found'
+  });
+});
+
+app.all('*', (req, res) => {
+  res.redirect('/not-found');
+});
+
+httpServer.listen(httpPort, '0.0.0.0', undefined, () => console.log(`Http server is up on port ${httpPort}`));
