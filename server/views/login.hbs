@@ -1,28 +1,22 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset='utf-8'>
-    <title>Login | Excelsior</title>
-    {{> links}}
+    {{> head}}
   </head>
   <body>
     {{> header}}
-    <div class="row">
-      <div class="column">
-        {{> pageJS js="login"}}
-        {{> signin action="/login" text="Login"}}
-      </div>
-      <div class="column">
-        <div class="center column island">
-          <h2 class="unset center text">What's New</h2>
+    <div class="fullwidth table padding">
+      <div class="tr">
+        <div class="td" style="vertical-align: top; width: 40%;">
+          <h1 class="center">What's New?</h1>
+          <div class="round border" style="min-height: 40vh;"></div>
         </div>
-        <div class="border field">
-          <table class="field">
-            <tr>
-              <td>May 11th, 2018</td>
-              <td colspan=3>This site was made beautiful.</td>
-            </tr>
-          </table>
+        <div class="td">
+          {{> user_form}}
+          <div class="fullwidth center">
+            <div class="margin">Or</div>
+            <a href="/auth/facebook"><button class="border" type="button" style="width: 15em; background-color: #4665AE;">Sign in with Facebook</button></a>
+          </div>
         </div>
       </div>
     </div>

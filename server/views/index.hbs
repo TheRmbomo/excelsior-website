@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {{> head}}
+  </head>
+  <body>
+    {{> header}}
+    <!-- {{> search}} -->
+    <div class="fullwidth table">
+      <div class="fullwidth tr">
+        <div class="td padding">
+          {{> pol_view start="root" border=true}}
+          <div class="fullwidth center text padding">
+            <a href="/path/3a3bceba-90c7-4221-8e82-63c1453613ab">Placeholder POL</a>
+          </div>
+          <p class="round border padding">Description of Excelsior</p>
+        </div>
+        <div class="td" style="background-image: url(/img/beautiful_background.png); background-size: 100%;">
+          {{#if logged-in}}
+            {{else}}
+            {{> user_form createUser="on"}}
+          {{/if}}
+        </div>
+      </div>
+    </div>
+    {{> footer}}
+  </body>
+  <!-- {{> pageJS js="createUser"}} -->
+</html>

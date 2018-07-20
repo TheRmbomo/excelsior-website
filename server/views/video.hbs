@@ -10,7 +10,7 @@
     {{> header}}
     <h2 class="island">{{video.name}} | {{path.name}}</h2>
     <div class="row">
-      <div class="video column">
+      <div class="wide video column">
         <img class="ratio" src="/16x9.png"/>
         <iframe class="dark background" src="{{video.url}}" frameborder="0" allowfullscreen></iframe>
         <div class="lightblue background column">
@@ -19,7 +19,7 @@
           <a class="right">Subscribe to the uploader!</a>
         </div>
       </div>
-      <div class="column">
+      <div class="thin column">
         <div class="lightblue background box">
           <h2 class="center text"><a href="/paths/{{path._id}}">{{path.name}}</a></h2>
           {{> pathresults}}

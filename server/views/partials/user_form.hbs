@@ -1,0 +1,37 @@
+<div class="user_form" style="min-width: 200px;">
+  <form action={{#if createUser}}"/create-user"{{else}}"/login-user"{{/if}} method="post">
+    <h2 class="unset center text padding">
+      {{#if createUser}}Create a Free Account!{{else}}Log in to Existing Account{{/if}}
+    </h2>
+    <div class="table padding">
+      <span class="col" type="text" style="width: 5em;"></span>
+      <span class="col" type="text" style="width: 100%;"></span>
+      <div class="tr">
+        <label for="email" class="text td">Email:</label>
+        <input id="email" class="fullwidth td padding" name="email"/>
+      </div>
+      <div class="tr">
+        <label for="password" class="text td">Password:</label>
+        <input id="password" class="fullwidth td padding" name="password" type="password" autocomplete={{#if createUser}}"new_password"{{else}}"current_password"{{/if}}/>
+      </div>
+    </div>
+    <div class="lock fullwidth table">
+      <div class="lock tr">
+        <span class="lock td padding">
+          {{#if createUser}}
+          Already have an account? <a href="/login">Log in here!</a>
+          {{else}}
+          Don't have an account? <a href="/">Sign up here!</a>
+          {{/if}}
+        </span>
+        <div class="lock td padding" style="width: 4em;">
+          <input class="floatright padding" type="submit" value={{#if createUser}}
+          "Sign Up"
+          {{else}}
+          "Log In"
+          {{/if}} style="min-width: 20%;"/>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

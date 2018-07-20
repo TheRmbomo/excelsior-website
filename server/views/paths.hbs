@@ -1,39 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset='utf-8'>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{pageTitle}} | Excelsior</title>
-    {{> links}}
+    {{> head}}
   </head>
   <body>
-    {{> header pageTitle=""}}
+    {{> header}}
     {{#unless isPath}}
-      {{> pathview}}
+      {{> pol_view}}
       <span><a href="/paths/explore">Explore</a></span>
       <span> ~~~ </span>
       <span><a href="/paths/5b048c62bd0bc33356521ed1">Test Path</a></span>
-    {{else}}
-      <div class="row">
-        <div class="column">
-          <h1>{{path.name}}</h1>
-          <p>{{path.description}}</p>
-          <div class="border box">
-            <h2 class="center text">Approval Rating: {{rating}}</h2>
-            <table class="field">
-              <tr class="border head">
-                <th>Users</th>
-                <th colspan=2>Reviews</th>
-              </tr>
-              {{> userreviews threshold=200}}
-            </table>
+      {{else}}
+      <div class="fullwidth table">
+        <div class="fullwidth tr">
+          <div class="td center text" style="width: 30%;">
+            <h1>{{path.display_name}}</h1>
+            {{> user_reviews threshold=200 }}
           </div>
-        </div>
-        <div class="column">
-          {{> pathview border=true}}
-          <div class="border island column">
-            <h2 class="center text">Path Content</h2>
-            {{> pathresults}}
+          <div class="half td">
+            {{> pol_view border=true}}
+            {{> pol_content_list}}
           </div>
         </div>
       </div>

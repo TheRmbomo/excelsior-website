@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    {{> head}}
+  </head>
+  <body>
+    {{> header}}
+    {{#with data}}
+    <div class="table">
+    {{#each users}}
+    <div class="tr" style="height: 10vh;">
+      <img class="td" src="{{avatar_path}}" alt="" height="50"/>
+      <div class="td">
+        {{display_name}}
+      </div>
+      <div class="td">
+        <a href="/user/{{username}}-{{shortened_id}}">Profile</a>
+      </div>
+    </div>
+    {{/each}}
+    </div>
+    {{/with}}
+    {{> footer}}
+  </body>
+</html>
