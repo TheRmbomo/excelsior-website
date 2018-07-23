@@ -200,7 +200,7 @@ passport.deserializeUser(async (userId, done) => {
     else {
       let user = users.rows[0];
       user.shortened_id = users.rows[0].shortened_id.toString('hex');
-      console.log('deserialize', user);
+      // console.log('deserialize', user);
       return done(null, user);
     }
   } catch (e) {

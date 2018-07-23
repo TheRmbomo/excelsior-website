@@ -79,7 +79,7 @@ html, body {
   float: right;
 }
 
-.island, .user_form {
+.island {
   margin: auto;
 }
 
@@ -90,14 +90,14 @@ html, body {
   padding: 0.5em;
 }
 
-.border, .user_form {
+.border {
   border: 2px solid #AAAABB;
 }
 
 .background, textarea, button {
   background-color: #444455;
 }
-  .dark.background, .user_form {
+  .dark.background {
     background-color: #222222;
   }
   .light.background, input {
@@ -130,11 +130,11 @@ html, body {
   height: auto;
 }
 
-.half, .user_form {
+.half {
   width: 50%;
 }
 
-.round, input, button, .user_form, img, textarea {
+.round, input, button, img, textarea {
   border-radius: 5px;
 }
 
@@ -161,16 +161,6 @@ html, body {
   .large.text {
     font-size: 1.5em;
   }
-
-.user_form {
-
-}
-
-@media screen and (max-width: 600px) {
-  .user_form {
-    width: 75%;
-  }
-}
 
 .modal {
   display: none;

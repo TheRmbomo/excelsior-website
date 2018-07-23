@@ -1,20 +1,16 @@
-<div class="fullwidth table" style="min-height: 30em;">
-  <div class="fullwidth tr">
+<div class="fullwidth table">
+  <div class="tr">
     <div class="td padding">
       {{!> pol_view start="root" border=true}}
       <div class="center">
         <a href="/paths"><button type="button"><h2 class="padding">View All Paths</h2></button></a>
       </div>
-      {{!--
-      <div class="fullwidth center text padding">
-        <a href="/path/3a3bceba-90c7-4221-8e82-63c1453613ab">Placeholder POL</a>
-      </div>
-      --}}
-      <p class="round border padding">Description of Excelsior</p>
+      <p class="island round border padding" style="margin-top: 1em; text-align: justify; max-width: 30em;">Paving the way to the education of tomorrow, Excelsior (*Subject to Change) gives you the tools to both find your guide and offer to guide others in becoming the best versions of themselves.</p>
     </div>
-    <div class="td" style="background-image: url(/img/beautiful_background.png); background-size: 100% 100%; background-repeat: no-repeat;">
+  </div>
+  <div class="td" style="background-image: url(/img/beautiful_background.png); background-size: auto 100%; background-repeat: no-repeat; background-position: center;">
+    <div style="min-height: 15em;">
       {{#if logged-in}}
-
       {{else}}
       {{> user_form createUser="on"}}
       {{/if}}
