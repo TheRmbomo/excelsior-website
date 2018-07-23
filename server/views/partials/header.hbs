@@ -1,35 +1,32 @@
-<header class="light{{#if translucent_header}} translucent{{/if}} background padding" style="padding-left: 30px; padding-right: 30px; min-width: 265px;">
-  <div class="lock tr">
-    <div class="lock td">
-      <a href="/" style="width: 50px; height: 50px;"><img src="/img/logo150.png" alt="Excelsior Industries" width="50" height="50"/></a>
+<header class="light{{#if translucent_header}} translucent{{/if}} background padding" style="padding-left: 2em; padding-right: 2em; min-width: 16em;">
+  {{#if message}}
+  <div class="fullwidth center text padding" style="font-size: 1.5em; font-weight: 700;">{{message}}</div>
+  {{/if}}
+  <div class="fullwidth lock table">
+    <div class="lock tr">
+      <div class="lock td">
+        <a href="/"><img src="/img/logo150.png" style="width: 3em; height: 3em;" alt="Excelsior Industries"/></a>
+      </div>
+      {{! User Profile}}
+      {{!--
+      <div class="lock td">
+        <a href="/path/create">Create Path</a>
+      </div>
+      --}}
+      <div class="lock td" style="width: 4em;">
+        {{#if logged-in}}
+        <a href="/logout"><button type="button">Logout</button></a>
+        {{else}}
+        <a href="/login"><button type="button">Log In</button></a>
+        {{/if}}
+      </div>
+      {{#if logged-in}}
+      <div class="lock td right" style="width: 3em;">
+        <a href="/user/{{user-url}}">
+          <button class="border" style="background: unset; width: 3em; height: 3em; background-image: url({{user-avatar}}); background-size: 100%;"></button>
+        </a>
+      </div>
+      {{/if}}
     </div>
-    {{#if message}}
-      <h1 class="fullwidth lock td unset center text padding">{{message}}</h1>
-    {{else}}
-      <div class="fullwidth lock td"></div>
-    {{/if}}
-    {{! User Profile}}
-    {{#if logged-in}}
-    {{!--
-    <div class="lock td">
-      <a href="/unset-ext">Unset Externals</a>
-    </div>
-    --}}
-    <div class="lock td">
-      <a href="/users">Users</a>
-    </div>
-    <div class="lock td padding">
-      <a href="/logout"><button type="button">Logout</button></a>
-    </div>
-    <div class="lock td">
-      <a href="/user/{{user-url}}">
-      <button class="border" style="background: unset; width: 50px; height: 50px; background-image: url({{user-avatar}}); background-size: 100%;"></button>
-      </a>
-    </div>
-    {{else}}
-    <div class="lock td">
-      <a href="/login"><button type="button" style="width: 4em;">Log In</button></a>
-    </div>
-    {{/if}}
   </div>
 </header>

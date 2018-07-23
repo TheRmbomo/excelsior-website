@@ -47,11 +47,11 @@ let runDB = (async () => {
     }
     console.error('Could not connect to PostgreSQL:', message);
   }
-});
+})
 
-(async () => {
+;(async () => {
   await runDB();
-  await pgQuery(`CREATE TABLE IF NOT EXISTS users (
+  pgQuery(`CREATE TABLE IF NOT EXISTS users (
     id uuid default uuid_generate_v4() primary key,
     shortened_id bytea,
     public_profile boolean default true,
@@ -67,49 +67,61 @@ let runDB = (async () => {
     avatar_path varchar(255),
     age int2,
     friends uuid[],
+    following_paths uuid[],
     currency real default 0.0,
     auth_keys varchar(255)[],
     path_keys uuid[],
     resource_keys uuid[],
-    created_date timestamp default now()
-  );`);
-  await pgQuery(`CREATE TABLE IF NOT EXISTS paths (
+    created_at timestamp default now()
+  );`)
+  pgQuery(`CREATE TABLE IF NOT EXISTS paths (
     id uuid default uuid_generate_v4() primary key,
     shortened_id bytea,
     name varchar(255),
     display_name varchar(255),
-    tags varchar(255),
+    image_path varchar(255),
+    tags varchar(255)[100],
     mongo_id varchar(24),
     created_by uuid,
-    created_date timestamp default now(),
+    created_at timestamp default now(),
+    contributors uuid[],
     last_modified_by uuid,
-    last_modified timestamp default now(),
-    times_changed int4 default 0
-  );`);
-  await pgQuery(`CREATE TABLE IF NOT EXISTS resources (
+    last_modified timestamp default now()
+  );`)
+  pgQuery(`CREATE TABLE IF NOT EXISTS resources (
     id uuid default uuid_generate_v4() primary key,
     shortened_id bytea,
     name varchar(255),
     display_name varchar(255),
-    tags varchar(255),
+    image_path varchar(255),
+    tags varchar(255)[100],
     mongo_id varchar(24),
     created_by uuid,
-    created_date timestamp default now(),
+    created_at timestamp default now(),
     last_modified_by uuid,
-    last_modified timestamp default now(),
-    times_changed int4 default 0
-  );`);
-  await pgQuery(`CREATE TABLE IF NOT EXISTS files (
+    last_modified timestamp default now()
+  );`)
+  pgQuery(`CREATE TABLE IF NOT EXISTS files (
     id uuid default uuid_generate_v4() primary key,
-    name varchar(63),
+    name varchar(255),
     owner uuid,
     path varchar(255),
     size int default 0,
     type varchar(15),
-    created_at date default now(),
+    created_at timestamp default now(),
     times_accessed int default 0,
     last_accessed timestamp default now()
-  );`);
-})();
+  );`)
+  pgQuery(`CREATE TABLE IF NOT EXISTS questions (
+    id serial primary key,
+    first_name varchar(255),
+    last_name varchar(255),
+    question varchar(255),
+    asked_at timestamp default now(),
+    answer varchar(255),
+    answered_by varchar(255),
+    answered_at timestamp
+  )`)
+})()
 
 module.exports = {pgQuery};

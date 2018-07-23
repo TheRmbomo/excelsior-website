@@ -1,0 +1,32 @@
+<div class="round dark background padding relative" style="min-height: 10em; margin-bottom: 1em;">
+  <div class="absolute" style="top: 1em; left: 1em;"><a href="/questions/{{id}}">{{id}}</a></div>
+  <div class="island padding" style="max-width: 16em; font-size: 1em;">
+    Asked by: {{first_name}} {{last_name}}
+    <br>
+    at {{asked_at}}
+  </div>
+  <div class="left round light background island padding" style="max-width: 30em;">{{question}}</div>
+  {{#if answer}}
+  <div class="island padding" style="max-width: 30em; font-size: 1em;">
+    Answered by: {{answered_by}}
+    <br>
+    at {{answered_at}}
+    <div class="margin round padding background">
+      {{answer}}
+    </div>
+    <form action="/delete-answer" method="post">
+      <input type="hidden" name="id" value="{{id}}">
+      <input type="submit" value="Re-Answer">
+    </form>
+  </div>
+  {{else}}
+  <form class="island padding" style="max-width: 16em;" action="/answer-question" method="post">
+    <input type="hidden" name="id" value="{{id}}">
+    <input type="text" name="answered_by" placeholder="Answered by: [Optional]">
+    <div class="fullwidth relative inblock">
+      <textarea class="fullwidth padding text" placeholder="Write your response here..." name="answer"></textarea>
+      <input type="submit" value="Answer" class="inset light background" style="width: unset; right: .5em; bottom: .75em;">
+    </div>
+  </form>
+  {{/if}}
+</div>

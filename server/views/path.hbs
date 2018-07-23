@@ -1,0 +1,27 @@
+<div class="island round dark background center padding" style="max-width: 40em; margin-bottom: 1em;">
+  {{#with path}}
+  {{#if image_path}}<img src="{{image_path}}" style="width: 15em; height: 12em;">{{/if}}
+  <h1 class="padding">{{display_name}}</h1>
+  <table class="island fullwidth round padding background" style="max-width: 30em;">
+    <tr>
+      <td>Path Name:</td>
+      <td>{{display_name}}</td>
+    </tr>
+    <tr>
+      <td>Author:</td>
+      <td><a href="#">{{author}}</a></td>
+    </tr>
+    <tr>
+      <td>Contributors:</td>
+      <td><a href="#">{{contributors}}</a></td>
+    </tr>
+    <tr>
+      <td>Content #:</td>
+      <td><a href="#">{{content.count}}</a></td>
+    </tr>
+  </table>
+  {{/with}}
+</div>
+<div class="island" style="max-width: 40em;">
+  {{> pol_content_list}}
+</div>

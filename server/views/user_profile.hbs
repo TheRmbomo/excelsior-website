@@ -16,7 +16,7 @@
         <span>Display Name:</span>
         <input type="text" name="display_name" value="{{user.display_name}}">
       </div>
-      {{else}}<h1 class="unset padding">{{user.display_name}}</h1>{{/if}}{{#if ownPage}}<a {{#if edit}}href='/user/{{user.url}}'>Stop editing{{else}}href='/user/{{user.url}}/edit'>Edit{{/if}}</a>{{/if}}
+      {{else}}<h1 class="unset padding">{{#if user.display_name}}{{user.display_name}}{{else}}User Profile{{/if}}</h1>{{/if}}{{#if ownPage}}<a {{#if edit}}href='/user/{{user.url}}'>Stop editing{{else}}href='/user/{{user.url}}/edit'>Edit{{/if}}</a>{{/if}}
     </div>
     {{#if edit}}
     <div class="td center round background padding aligntop">

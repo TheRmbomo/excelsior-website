@@ -4,3 +4,5 @@ public/.well-known
 run_localhost
 public/files/*
 !public/files/.gitkeep
+public/img/*
+!public/img/default*

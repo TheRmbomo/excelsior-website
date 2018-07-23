@@ -1,88 +1,86 @@
-const fs = require('fs');
-const path = require('path');
-const express = require('express');
-const {ObjectID} = require('mongodb');
-const xss = require('xss');
-const scrypt = require('scrypt');
-const valid = require('validator');
-const passport = require('passport');
-const uuid = require('uuid/v4');
-const uuidParse = require('uuid-parse').parse;
+const fs = require('fs')
+const path = require('path')
+const express = require('express')
+const {ObjectID} = require('mongodb')
+const hbs = require('hbs')
+const scrypt = require('scrypt')
+const valid = require('validator')
+const passport = require('passport')
+const uuid = require('uuid/v4')
+const uuidParse = require('uuid-parse').parse
 
-const {app} = require('./../app');
-const {pgQuery} = require('./../db/pg');
-const {shortenId, loginCB} = require('./../middleware/passport');
+const {app} = require('./../app')
+const {pgQuery} = require('./../db/pg')
+const {shortenId, loginCB} = require('./../middleware/passport')
 
 var defaultAvatar = '/img/default_avatar.png'
 
 app.get('/logout', (req, res) => {
-  console.log('Logged out');
-  req.logout();
-  res.locals['logged-in'] = false;
-  res.redirect('/login');
-});
+  console.log('Logged out')
+  req.logout()
+  res.locals['logged-in'] = false
+  res.redirect('/login')
+})
 
 app.route('/create-user')
-.get((req, res) => {
-  res.redirect('back')
-})
+.get((req, res) => res.redirect('back'))
 .post(async (req, res, next) => {
-  req.logout();
-  let {email, password} = req.body, error = {};
+  req.logout()
+  let {email, password} = req.body, error = {}
 
-  if (!email) error.email = {type: 'required'};
-  else if (!valid.isEmail(email + '')) error.email = {type: 'invalid'};
+  if (!email) error.email = {type: 'required'}
+  else if (!valid.isEmail(email + '')) error.email = {type: 'invalid'}
   else {
     let emailsReq = await pgQuery('SELECT unnest(emails) FROM users')
     .catch(e => console.log(Error(e)))
     for (var i=emailsReq.rows.length-1; i>=0; i--) {
-      if (emailsReq.rows[i].unnest === email) error.email = {type: 'taken'};
+      if (emailsReq.rows[i].unnest === email) error.email = {type: 'taken'}
     }
   }
-  if (!password) error.password = {type: 'required'};
-  else if (!valid.isLength(password + '', {min: 6})) error.password = {type: 'length'};
-  if (Object.keys(error).length) return next(JSON.stringify(error));
+  if (!password) error.password = {type: 'required'}
+  else if (!valid.isLength(password + '', {min: 6})) error.password = {type: 'length'}
+  if (Object.keys(error).length) return next(JSON.stringify(error))
 
-  let sctParams = await scrypt.params(0.5).catch(error => {return {error}});
+  let sctParams = await scrypt.params(0.5).catch(error => {return {error}})
   if (sctParams.error) {
     // Generating Scrypt Parameters
     // do a thing, maybe send static req property for error
-    return console.log(sctParams.error);
+    return console.log(sctParams.error)
   }
-  let kdfRes = await scrypt.kdf(password, sctParams);
+  let kdfRes = await scrypt.kdf(password, sctParams)
   let q = await pgQuery(`INSERT INTO users (emails, hashed_password)
   values (ARRAY[$1],$2) RETURNING id`, [email, kdfRes])
   .catch(e => {
     console.log(Error(e))
-    return next();
+    return next()
   })
-  let user = q.rows[0];
+  let user = q.rows[0]
 
-  console.log('PLACEHOLDER: Email sent');
-  user.shortened_id = shortenId(user.id);
+  console.log('PLACEHOLDER: Email sent')
+  user.shortened_id = shortenId(user.id)
 
   req.login(user, err => {
-    if (err) return next(err);
+    if (err) return next(err)
 
-    console.log(req.user);
-    return res.redirect(`/user/user-${req.user.shortened_id.toString('hex')}`);
-  });
-  return res.redirect('back');
-});
+    console.log(req.user)
+    return res.redirect(`/user/user-${req.user.shortened_id.toString('hex')}`)
+  })
+  return res.redirect('back')
+})
 
 app.get('/login-user', (req, res) => {
-  res.redirect('back');
-});
+  res.redirect('back')
+})
 
 app.get('/login', (req, res) => {
-  console.log('req.session.passport =', req.session.passport);
+  console.log('req.session.passport =', req.session.passport)
   res.render('login', {
     title: 'Sign-in'
-  });
-});
+  })
+})
 
 app.get('/users', async (req, res, next) => {
-  let data = {};
+  let data = {}
 
   let q = await pgQuery(`SELECT display_name, username, shortened_id, avatar_path FROM users`)
   .catch(e => {
@@ -90,161 +88,237 @@ app.get('/users', async (req, res, next) => {
     return next()
   })
   q.rows.map(user => {
-    user.shortened_id = user.shortened_id.toString('hex');
+    user.shortened_id = user.shortened_id.toString('hex')
     if (!user.avatar_path) user.avatar_path = defaultAvatar
-    if (!user.username) user.username = 'user';
-  });
-  data.users = q.rows;
+    if (!user.username) user.username = 'user'
+  })
+  data.users = q.rows
 
   res.render('multilist', {
     title: 'Multiple Results',
     data
-  });
-});
+  })
+})
 
-var userRouter = express.Router();
+var userRouter = express.Router()
 app.use('/user/:id', async (req, res, next) => {
-  var {id} = req.params;
+  var {id} = req.params
+  id = id.split('-')
+  id.splice(2)
+  if (!id[0]) return next()
 
-  id = id.split('-');
-  id.splice(2);
+  var q, user, userId,
+  temp_table = 't' + new Buffer(uuidParse(uuid())).toString('hex')
 
-  var q, user, temp_table = 't' + new Buffer(uuidParse(uuid())).toString('hex');
   if (id.length === 1) {
-    return next();
+    return next()
     // username
       // Unique, redirect
       // Shared, we've found multiple
     // id
       // Match
     // If Match, redirect
+  } else if (id[0] === 'user') {
+    q = await pgQuery(`SELECT id, shortened_id FROM users
+    WHERE shortened_id=$1;`, [new Buffer(id[1], 'hex')])
+    .catch(e => {
+      console.log(Error(e))
+      return
+    })
   } else {
-    if (id[0] === 'user') {
-      q = await pgQuery(`SELECT id FROM users
-        WHERE shortened_id=$1;`, [new Buffer(id[1], 'hex')])
-      .catch(e => console.log(Error(e)))
-      user = q.rows[0];
-    }
-    else try {
-      await pgQuery(`CREATE TABLE ${temp_table} AS (SELECT id, shortened_id
-        FROM users WHERE username=$1);`, [id[0]]);
-      q = await pgQuery(`SELECT * FROM ${temp_table};`);
-      if (!q.rows.length) return next(); // Username didn't match anyone
+    q = await pgQuery(`CREATE TABLE ${temp_table} AS (SELECT id, shortened_id
+    FROM users WHERE username=$1);`, [id[0]])
+    .then(async () => {
+      q = await pgQuery(`SELECT * FROM ${temp_table};`)
+      if (!q.rows.length) return // Username didn't match anyone
       else if (q.rows.length === 1) { // Unique username
-        let userId = q.rows[0].shortened_id.toString('hex');
-        if (userId !== id[1]) return res.redirect(`/user/${id[0]}-${userId}`);
-        q.rows[0].url = `${id[0]}-${userId}`;
+        userId = q.rows[0].shortened_id.toString('hex')
+        if (userId !== id[1]) {
+          res.redirect(`/user/${id[0]}-${userId}`)
+          return 'redirect'
+        }
       } else { // Shared username
         q = await pgQuery(`SELECT * FROM ${temp_table}
-          WHERE shortened_id=$1;`, [new Buffer(id[1], 'hex')]);
-        if (!q.rows.length) return next(); // Unknown id
+        WHERE shortened_id=$1;`, [new Buffer(id[1], 'hex')])
+        if (!q.rows.length) return // Unknown id
         else if (q.rows.length > 1) { // Id collision
-          console.log(Error('ERROR: SHORTENED_ID COLLISION'))
+          console.log(Error('SHORTENED_ID COLLISION'))
           // TODO: Handle s_id collisions, reassign them
-          return next();
+          return
         }
       }
-      user = q.rows[0];
-    } catch (e) { console.log(Error(e)) }
-    pgQuery(`DROP TABLE IF EXISTS ${temp_table};`)
-    .catch(e => console.log(Error(e)))
+      return q
+    })
+    .catch(e => {
+      console.log(Error(e))
+      q = undefined
+    })
   }
-  q = await pgQuery(`SELECT username, nosql_id, first_name, last_name,
-    display_name, avatar_path, age, friends, currency, created_date
-    FROM users WHERE id=$1`, [user.id])
+  if (!q) return next()
+  if (q === 'redirect') return
+
+  user = q.rows[0]
+  userId = user.shortened_id.toString('hex')
+  user.url = `${id[0]}-${userId}`
+  pgQuery(`DROP TABLE IF EXISTS ${temp_table};`)
   .catch(e => console.log(Error(e)))
-  Object.assign(user, q.rows[0]);
 
-  user.created_date = req.format_date(user.created_date);
+  if (!user) return next()
 
+  q = await pgQuery(`SELECT username, mongo_id, first_name, last_name,
+  display_name, avatar_path, age, friends, currency, created_at
+  FROM users WHERE id=$1`, [user.id])
+  .catch(e => console.log(Error(e)))
+  Object.assign(user, q.rows[0])
+
+  user.created_at = req.format_date(user.created_at)
   user.avatar_path = user.avatar_path || defaultAvatar
-  req.viewedUser = user;
+  req.viewedUser = user
 
   Object.assign(res.locals, {
     user,
     ownPage: (req.user) ? id[1] === req.user.shortened_id : false,
     title: (user && user.display_name) ? user.display_name : 'User Profile'
-  });
-  next();
-}, userRouter);
+  })
+  next()
+}, userRouter)
 
 userRouter.get('/', async (req, res, next) => {
-  let user = req.viewedUser;
-  if (!user) return next();
+  let user = req.viewedUser
+  if (!user) return next()
 
-  res.render('user_profile');
-});
+  res.render('user_profile')
+})
 
 userRouter.get('/edit', (req, res, next) => {
-  let user = req.viewedUser;
-  if (!user) return next();
+  let user = req.viewedUser
+  if (!user) return next()
 
-  if (user.id !== req.user.id) return res.redirect(`/user/${user.url}`);
+  if (user.id !== req.user.id) return res.redirect(`/user/${user.url}`)
 
   res.render('user_profile.hbs', {
     edit: true
-  });
-});
+  })
+})
 
-app.post('/edit-profile', async (req, res) => {
+userRouter.get('/paths', (req, res, next) => {
+  let user = req.viewedUser
+  if (!user) return next()
+
+  // TODO: If user has made this page private, return next()
+
+  let listings = [], no_paths = false,
+  list_paths = rows => {
+    let paths = rows.reduce((text, row) => {
+      row.last_modified = req.format_date(row.last_modified)
+      row.description = 'This is a description of a legendary path of learning that will be sure to wow and amaze even the most skeptical and cynical of readers.'
+      if (!row.name || !row.shortened_id) return text
+      row.url = `/path/${row.name}-${row.shortened_id.toString('hex')}`
+      if (row.description.length > 80) row.description = row.description.slice(0,80).trim() + '...'
+      return text + hbs.compile('{{> path_listing}}')(row)
+    }, '')
+    return paths
+  }
+
+  pgQuery(`SELECT shortened_id, name, display_name, image_path, last_modified
+  FROM paths WHERE created_by=$1 ORDER BY last_modified DESC;`, [req.viewedUser.id])
+  .then(q => {
+    if (!q.rows.length) no_paths = true
+    return q.rows
+  })
+  .then(list_paths)
+  .then(paths => {
+    let message
+    if (req.user && req.viewedUser.id === req.user.id) message = `You haven't `
+    else message = `They haven't `
+    message += 'created any paths yet.'
+    if (!paths) paths = `<div class="tr">
+      <div class="td center round dark background padding">${message}</div>
+    </div>`
+    paths = new hbs.SafeString(`<div class="island table" style="max-width: 45em;">${paths}</div>`)
+    listings.push({group_name: `${req.viewedUser.display_name}'s Paths`, paths})
+  })
+  .then(() => {
+    listings = listings.reduce((text, group) => {
+      return new hbs.SafeString(text + hbs.compile('{{> path_group}}')(group))
+    }, '')
+
+    return res.render('list_paths', {
+      title: 'Your Paths of Learning',
+      listings,
+      no_paths
+    })
+  })
+  .catch(e => {
+    console.log(Error(e))
+    return res.send()
+  })
+})
+
+app.post('/edit-profile', express.json(), express.urlencoded({extended: true}), async (req, res) => {
   if (!req.user) return res.redirect('back')
 
-  let error = {}, bodyKeys = Object.keys(req.body);
+  let error = {}, bodyKeys = Object.keys(req.body)
   bodyKeys.map(key => {
     switch (key) {
       case 'first_name':
-        if (req.body[key]) break;
-        error[key] = {type: 'required'};
+        if (req.body[key]) break
+        error[key] = {type: 'required'}
       case 'avatar':
         // console.log(req.body[key]);
-        delete req.body[key];
-        bodyKeys.splice(bodyKeys.indexOf(key), 1);
-        if (key === 'first_name') break;
-        req.body['avatar_path'] = '';
-        bodyKeys.push('avatar_path');
-        return;
+        delete req.body[key]
+        bodyKeys.splice(bodyKeys.indexOf(key), 1)
+        if (key === 'first_name') break
+        req.body['avatar_path'] = ''
+        bodyKeys.push('avatar_path')
+        return
       case 'username':
-        req.body[key] = req.body[key].split(/\W/).join('');
-        break;
+        req.body[key] = req.body[key].split(/\W/).join('')
+        break
     }
-  });
+  })
   let update_keys = bodyKeys.map(key => `${key}`).join(','),
   update_values = Object.values(req.body),
   update_values_spot = (length => {
     // +1 and >2 to make room for the user id
-    for (var i=length+1, array=[]; array.push('$'+i), i>2; i--);
-    return array.reverse().join(',');
-  })(bodyKeys.length);
+    for (var i=length+1, array=[]; array.push('$'+i), i>2; i--)
+    ;return array.reverse().join(',')
+  })(bodyKeys.length)
 
   if (bodyKeys.length > 1) {
-    update_keys = `(${update_keys})`;
-    update_values_spot = `(${update_values_spot})`;
+    update_keys = `(${update_keys})`
+    update_values_spot = `(${update_values_spot})`
   }
-  let update = `${update_keys}=${update_values_spot}`;
-  let parameters = [req.user.id].concat(update_values), user;
-  // console.log(update, parameters);
+  let update = `${update_keys}=${update_values_spot}`
+  let parameters = [req.user.id].concat(update_values), user
+  // console.log(update, parameters)
   let q = await pgQuery(`UPDATE users SET ${update} WHERE id=$1
-    RETURNING username, shortened_id;`, parameters)
-  .catch(e => console.log(Error(e)))
-  user = q.rows[0];
-  user.shortened_id = user.shortened_id.toString('hex');
-  if (user) {
-    return res.redirect(`/user/${user.username}-${user.shortened_id}/edit`);
-  } else return res.redirect('back');
-});
+  RETURNING username, shortened_id;`, parameters)
+  .then(q => {
+    user = q.rows[0]
+    user.shortened_id = user.shortened_id.toString('hex')
+    if (user) {
+      return res.redirect(`/user/${user.username || 'user'}-${user.shortened_id}/edit`)
+    } else throw 'User update failed'
+  })
+  .catch(e => {
+    console.log(Error(e))
+    return res.redirect('back')
+  })
+})
 
 app.get('/my-files', async (req, res) => {
   if (!req.user) return res.redirect('/login')
 
   let q, full = false, files
   q = await pgQuery(`SELECT id AS image_id, name, path, size, type, created_at,
-    times_accessed, last_accessed FROM files WHERE owner=$1;`, [req.user.id])
+  times_accessed, last_accessed FROM files WHERE owner=$1;`, [req.user.id])
   .catch(e => {
     console.log(Error(e))
     return res.redirect('back')
   })
 
-  let taken_space = q.rows.reduce((acc,cur) => acc + cur.size, 0);
+  let taken_space = q.rows.reduce((acc,cur) => acc + cur.size, 0)
   if (taken_space >= 1024 * 1024 * 5) full = true
 
   files = q.rows
@@ -253,11 +327,11 @@ app.get('/my-files', async (req, res) => {
       case 'size':
         file[key] = Math.floor(file[key]/(1024*1024) * 100) / 100
         file[key] += ' MB'
-        break;
+        break
       case 'created_at':
       case 'last_accessed':
         file[key] = req.format_date(file[key])
-        break;
+        break
       case 'type':
         if (file[key].substr(0,5) !== 'image') {
           file['path'] = '/img/default_file.png'
@@ -280,26 +354,26 @@ app.post('/upload-file', async (req, res) => {
   if (!req.user) return
 
   q = await pgQuery(`SELECT id AS image_id, name, path, size, type, created_at,
-    times_accessed, last_accessed FROM files WHERE owner=$1;`, [req.user.id])
+  times_accessed, last_accessed FROM files WHERE owner=$1;`, [req.user.id])
   .catch(e => {
     console.log(Error(e))
     return res.redirect('back')
   })
 
-  let taken_space = q.rows.reduce((acc,cur) => acc + cur.size, 0);
+  let taken_space = q.rows.reduce((acc,cur) => acc + cur.size, 0)
   if (taken_space >= 1024 * 1024 * 5) return
 
   let upload = await require('./../middleware/formidable')(req,res)
   if (upload.error) return
+  console.log(upload);
   if (upload.files[0].size + taken_space >= 1024 * 1024 * 5) {
-    fs.unlink(path.join(app.locals.absolutePath, 'public/', 'files/', upload.filename), err => err)
+    fs.unlink(path.join(app.locals.absoluteDir, 'public/', 'files/', upload.filename), err => err)
     return
   }
   let file = upload.files[0], filePath = '/'
 
   if (file.type.substr(0,5) === 'image') {
-    let public = path.join(app.locals.absolutePath, 'public/')
-    fs.rename(path.join(public, 'files/', upload.filename), path.join(public, 'img/', upload.filename), err => err)
+    fs.rename(path.join(app.locals.public, 'files/', upload.filename), path.join(app.locals.public, 'img/', upload.filename), err => err)
     filePath += 'img/'
   }
 
@@ -314,7 +388,7 @@ app.post('/upload-file', async (req, res) => {
 app.post('/delete-file', express.json(), express.urlencoded({extended: true}), (req, res) => {
   res.redirect('back')
   if (!req.user) return
-  let {image_id, file_name} = req.body;
+  let {image_id, file_name} = req.body
 
   if (req.body['change-avatar']) {
     pgQuery('UPDATE users SET avatar_path=$2 WHERE id=$1', [req.user.id, file_name])
@@ -331,7 +405,7 @@ app.post('/delete-file', express.json(), express.urlencoded({extended: true}), (
   .then(a => a.rows[0]).then(async row => {
     if (row.owner === req.user.id) {
       let error;
-      await fs.unlink(path.join(app.locals.absolutePath, '/public', row.path), err => (err) ? error = err : '')
+      await fs.unlink(path.join(app.locals.absoluteDir, '/public', row.path), err => (err) ? error = err : '')
       if (error && error.errno !== -4058) throw error
       pgQuery('DELETE FROM files WHERE id=$1', [image_id])
       .catch(e => console.log(Error(e)))

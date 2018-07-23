@@ -63,26 +63,8 @@ html, body {
     display: table-cell;
     vertical-align: middle;
   }
-  @media screen and (max-width: 600px) {
-    :not(.lock).table {
-      display: block;
-      border-spacing: unset;
-      table-layout: unset;
-    }
-    :not(.lock).tr {
-      display: table;
-      border-spacing: 5px;
-      table-layout: fixed;
-    }
-    :not(.lock).td {
-      display: table-row;
-    }
-    .extra {
-      display: none;
-    }
-  }
 
-.unset {
+.unset, h1, h2, h3, h4, h5, h6, hr {
   margin: unset;
   padding: unset;
 }
@@ -152,7 +134,7 @@ html, body {
   width: 50%;
 }
 
-.round, input, button, .user_form, img {
+.round, input, button, .user_form, img, textarea {
   border-radius: 5px;
 }
 
@@ -164,6 +146,9 @@ html, body {
   font-family: "Cabin", "Trebuchet-MS", sans-serif;
   color: #BBBBBB;
 }
+  .left {
+    text-align: left;
+  }
   .center {
     text-align: center;
   }
@@ -235,7 +220,7 @@ a {
 button {
   background-color: #444455;
   font-family: "Cabin", sans-serif;
-  font-size: 16px;
+  font-size: 1em;
   padding: 0.5em;
 }
   button:disabled {
@@ -246,6 +231,10 @@ button {
 input {
   font-size: 1em;
   width: 100%;
+}
+
+input:read-only {
+  color: #9999AA;
 }
 
 input[type="submit"] {
@@ -261,13 +250,11 @@ form {
 }
 
 textarea {
+  resize: vertical;
   font-size: 1em;
   min-width: 5em;
   min-height: 6em;
   max-height: 30vh;
-}
-
-.area {
 }
 
 .inset {
