@@ -15,8 +15,9 @@ app.set('view engine', 'hbs')
   next()
 })
 
-hbs.registerPartials(path.join(__dirname + './../views/partials'))
 hbs.registerPartials(path.join(__dirname + '/../views'))
+hbs.registerPartials(path.join(__dirname + './../views/partials'))
+hbs.registerPartials(path.join(__dirname + './../views/partials/paths'))
 
 hbs.registerHelper('getCurrentYear', () => {
   return new Date().getFullYear()

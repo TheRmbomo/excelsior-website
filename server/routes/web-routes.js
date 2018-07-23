@@ -16,8 +16,6 @@ app.get('/', (req, res) => {
 })
 
 app.get('/questions', async (req, res) => {
-  // await pgQuery(`INSERT INTO questions (first_name, last_name, question)
-  // values ($1,$2,$3)`, ['Justin', '<script>alert(\'yes\');</script>', 'What is the color of the sky in space?'])
   let questions = await pgQuery(`SELECT id, first_name, last_name, question, asked_at,
   answer, answered_by, answered_at
   FROM questions ORDER BY asked_at DESC;`)
@@ -122,6 +120,11 @@ app.get('/paths', (req, res, next) => {
     .then(q => q.rows)
     .then(list_paths)
     .then(paths => {
+      let message
+      if (req.user) message = `You aren't following any paths yet.`
+      if (!paths) paths = `<div class="tr">
+      <div class="td center round dark background padding">${message}</div>
+      </div>`
       paths = new hbs.SafeString(`<div class="island table" style="max-width: 45em;">${paths}</div>`)
       listings.push({group_name: 'Currently Following', paths})
     })
@@ -156,7 +159,7 @@ app.get('/paths/:id', (req, res) => {
 })
 
 app.get('/path/:id', async (req, res, next) => {
-  var {id} = req.params, q
+  var {id} = req.params
   id = id.split('-')
   id.splice(2)
   if (!id[0]) return next()

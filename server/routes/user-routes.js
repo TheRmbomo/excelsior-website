@@ -177,7 +177,7 @@ app.use('/user/:id', async (req, res, next) => {
 
   Object.assign(res.locals, {
     user,
-    ownPage: (req.user) ? id[1] === req.user.shortened_id : false,
+    own_page: (req.user) ? id[1] === req.user.shortened_id : false,
     title: (user && user.display_name) ? user.display_name : 'User Profile'
   })
   next()
@@ -220,24 +220,64 @@ userRouter.get('/paths', (req, res, next) => {
     return paths
   }
 
-  pgQuery(`SELECT shortened_id, name, display_name, image_path, last_modified
-  FROM paths WHERE created_by=$1 ORDER BY last_modified DESC;`, [req.viewedUser.id])
-  .then(q => {
-    if (!q.rows.length) no_paths = true
-    return q.rows
-  })
-  .then(list_paths)
-  .then(paths => {
-    let message
-    if (req.user && req.viewedUser.id === req.user.id) message = `You haven't `
-    else message = `They haven't `
-    message += 'created any paths yet.'
-    if (!paths) paths = `<div class="tr">
+  Promise.all([
+    pgQuery(`SELECT shortened_id, name, display_name, image_path, last_modified
+    FROM paths WHERE created_by=$1 ORDER BY last_modified DESC;`, [req.viewedUser.id])
+    .then(q => {
+      if (!q.rows.length) no_paths = true
+      return q.rows
+    })
+    .then(list_paths)
+    .then(paths => {
+      let message
+      if (req.user && req.viewedUser.id === req.user.id) message = `You haven't `
+      else message = `They haven't `
+      message += 'created any paths yet.'
+      if (!paths) paths = `<div class="tr">
       <div class="td center round dark background padding">${message}</div>
-    </div>`
-    paths = new hbs.SafeString(`<div class="island table" style="max-width: 45em;">${paths}</div>`)
-    listings.push({group_name: `${req.viewedUser.display_name}'s Paths`, paths})
-  })
+      </div>`
+      paths = new hbs.SafeString(`<div class="island table" style="max-width: 45em;">${paths}</div>`)
+      listings.push({group_name: `${req.viewedUser.display_name}'s Paths`, paths})
+    }),
+    pgQuery(`SELECT shortened_id, name, display_name, image_path, last_modified
+    FROM paths WHERE id = ANY((SELECT path_keys FROM users WHERE id=$1)::uuid[])
+    ORDER BY last_modified DESC;`, [req.viewedUser.id])
+    .then(q => {
+      if (!q.rows.length) no_paths = true
+      return q.rows
+    })
+    .then(list_paths)
+    .then(paths => {
+      let message
+      if (req.user && req.viewedUser.id === req.user.id) message = `You aren't `
+      else message = `They aren't `
+      message += 'managing any one\'s paths yet.'
+      if (!paths) paths = `<div class="tr">
+      <div class="td center round dark background padding">${message}</div>
+      </div>`
+      paths = new hbs.SafeString(`<div class="island table" style="max-width: 45em;">${paths}</div>`)
+      listings.push({group_name: `Managed Paths`, paths})
+    }),
+    pgQuery(`SELECT shortened_id, name, display_name, image_path, last_modified
+    FROM paths WHERE id = ANY((SELECT following_paths FROM users WHERE id=$1)::uuid[])
+    ORDER BY last_modified DESC;`, [req.viewedUser.id])
+    .then(q => {
+      if (!q.rows.length) no_paths = true
+      return q.rows
+    })
+    .then(list_paths)
+    .then(paths => {
+      let message
+      if (req.user && req.viewedUser.id === req.user.id) message = `You aren't `
+      else message = `They aren't `
+      message += 'following any paths yet.'
+      if (!paths) paths = `<div class="tr">
+      <div class="td center round dark background padding">${message}</div>
+      </div>`
+      paths = new hbs.SafeString(`<div class="island table" style="max-width: 45em;">${paths}</div>`)
+      listings.push({group_name: `Followed Paths`, paths})
+    })
+  ])
   .then(() => {
     listings = listings.reduce((text, group) => {
       return new hbs.SafeString(text + hbs.compile('{{> path_group}}')(group))
@@ -256,7 +296,7 @@ userRouter.get('/paths', (req, res, next) => {
 })
 
 app.post('/edit-profile', express.json(), express.urlencoded({extended: true}), async (req, res) => {
-  if (!req.user) return res.redirect('back')
+  if (!req.user) return res.redirect('/login')
 
   let error = {}, bodyKeys = Object.keys(req.body)
   bodyKeys.map(key => {
@@ -278,7 +318,7 @@ app.post('/edit-profile', express.json(), express.urlencoded({extended: true}), 
     }
   })
   let update_keys = bodyKeys.map(key => `${key}`).join(','),
-  update_values = Object.values(req.body),
+  update_values = Object.values(req.body).map(value => value.trim()),
   update_values_spot = (length => {
     // +1 and >2 to make room for the user id
     for (var i=length+1, array=[]; array.push('$'+i), i>2; i--)
@@ -294,12 +334,12 @@ app.post('/edit-profile', express.json(), express.urlencoded({extended: true}), 
   // console.log(update, parameters)
   let q = await pgQuery(`UPDATE users SET ${update} WHERE id=$1
   RETURNING username, shortened_id;`, parameters)
-  .then(q => {
-    user = q.rows[0]
+  .then(q => q.rows)
+  .then(rows => {
+    if (!rows.length) throw 'Failed to update user'
+    user = rows[0]
     user.shortened_id = user.shortened_id.toString('hex')
-    if (user) {
-      return res.redirect(`/user/${user.username || 'user'}-${user.shortened_id}/edit`)
-    } else throw 'User update failed'
+    return res.redirect(`/user/${user.username || 'user'}-${user.shortened_id}/edit`)
   })
   .catch(e => {
     console.log(Error(e))
