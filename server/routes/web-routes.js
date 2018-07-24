@@ -6,7 +6,6 @@ const {app} = require('./../app')
 const {pgQuery} = require('./../db/pg')
 const {shortenId} = require('./../middleware/passport')
 const {Path} = require('./../models/path')
-const {Resource} = require('./../models/resource')
 
 app.get('/', (req, res) => {
   res.render('index', {
