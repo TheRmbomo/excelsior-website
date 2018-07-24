@@ -1,3 +1,5 @@
+const session = require('express-session');
+const RedisStore = require('connect-redis')(session);
 const passport = require('passport');
 const LocalStrategy = require('passport-local');
 const Auth0Strategy = require('passport-auth0');
@@ -11,6 +13,20 @@ const {app} = require('./../app');
 const {pgQuery} = require('./../db/pg');
 
 app
+.use(session({
+  store: new RedisStore({
+    port: 6379,
+    host: 'www.excelsiorindustries.com',
+    pass: process.env.REDIS
+  }),
+  resave: false,
+  saveUninitialized: false,
+  secret: process.env.COOKIE_SECRET,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24,
+    secure: false
+  }
+}))
 .use(passport.initialize()).use(passport.session())
 .use((err, req, res, next) => {
   console.log('err', err);
