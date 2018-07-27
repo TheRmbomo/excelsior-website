@@ -66,13 +66,14 @@ let runDB = (async () => {
     display_name varchar(255),
     avatar_path varchar(255),
     age int2,
+    language varchar(255),
     friends uuid[],
-    following_paths uuid[],
     currency real default 0.0,
     auth_keys varchar(255)[],
     path_keys uuid[],
     resource_keys uuid[],
-    created_at timestamp default now()
+    created_at timestamp default now(),
+    last_logged_in timestamp default now()
   );`)
   pgQuery(`CREATE TABLE IF NOT EXISTS paths (
     id uuid default uuid_generate_v4() primary key,
@@ -80,13 +81,14 @@ let runDB = (async () => {
     name varchar(255),
     display_name varchar(255),
     image_path varchar(255),
+    language varchar(255),
     tags varchar(255)[100],
     mongo_id varchar(24),
     created_by uuid,
     created_at timestamp default now(),
     contributors uuid[],
     last_modified_by uuid,
-    last_modified timestamp default now()
+    last_modified_at timestamp default now()
   );`)
   pgQuery(`CREATE TABLE IF NOT EXISTS resources (
     id uuid default uuid_generate_v4() primary key,
@@ -99,7 +101,7 @@ let runDB = (async () => {
     created_by uuid,
     created_at timestamp default now(),
     last_modified_by uuid,
-    last_modified timestamp default now()
+    last_modified_at timestamp default now()
   );`)
   pgQuery(`CREATE TABLE IF NOT EXISTS files (
     id uuid default uuid_generate_v4() primary key,
