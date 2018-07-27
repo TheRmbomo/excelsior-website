@@ -210,8 +210,8 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (userId, done) => {
   try {
-    let users = await pgQuery(`SELECT id, username, display_name, avatar_path, shortened_id
-      FROM users WHERE id=$1;`, [userId]);
+    let users = await pgQuery(`SELECT id, username, display_name, avatar_path, shortened_id,
+      paths_following FROM users WHERE id=$1;`, [userId]);
     if (!users.rows.length) return done('user-not-found');
     else {
       let user = users.rows[0];

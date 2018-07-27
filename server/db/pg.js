@@ -54,7 +54,7 @@ let runDB = (async () => {
   pgQuery(`CREATE TABLE IF NOT EXISTS users (
     id uuid default uuid_generate_v4() primary key,
     shortened_id bytea,
-    public_profile boolean default true,
+    is_public boolean default true,
     emails varchar(255)[],
     last_unverified_email_added timestamp default now(),
     username varchar(255),
@@ -69,6 +69,7 @@ let runDB = (async () => {
     language varchar(255),
     friends uuid[],
     currency real default 0.0,
+    paths_following uuid[],
     auth_keys varchar(255)[],
     path_keys uuid[],
     resource_keys uuid[],
@@ -78,6 +79,7 @@ let runDB = (async () => {
   pgQuery(`CREATE TABLE IF NOT EXISTS paths (
     id uuid default uuid_generate_v4() primary key,
     shortened_id bytea,
+    is_public boolean default true,
     name varchar(255),
     display_name varchar(255),
     image_path varchar(255),
@@ -93,9 +95,11 @@ let runDB = (async () => {
   pgQuery(`CREATE TABLE IF NOT EXISTS resources (
     id uuid default uuid_generate_v4() primary key,
     shortened_id bytea,
+    is_public boolean default true,
     name varchar(255),
     display_name varchar(255),
     image_path varchar(255),
+    language varchar(255),
     tags varchar(255)[100],
     mongo_id varchar(24),
     created_by uuid,
@@ -112,7 +116,7 @@ let runDB = (async () => {
     type varchar(15),
     created_at timestamp default now(),
     times_accessed int default 0,
-    last_accessed timestamp default now()
+    last_accessed_at timestamp default now()
   );`)
   pgQuery(`CREATE TABLE IF NOT EXISTS questions (
     id serial primary key,

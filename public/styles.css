@@ -106,6 +106,9 @@ html, body {
     .translucent.light {
       background-color: #5555667F;
     }
+  .green.background {
+    background-color: #446655;
+  }
 
 .overflow {
   overflow: auto;

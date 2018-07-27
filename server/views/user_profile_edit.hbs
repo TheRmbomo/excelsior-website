@@ -1,25 +1,29 @@
+<form action="/edit-profile" method="post" class="center">
 <div class="island fullwidth table padding" style="max-width: 30em;">
   {{! Image and Name}}
   <div class="tr">
     <div class="td center relative" style="width: 15em;">
       <img class="round" src="{{user.avatar_path}}" style="width: 10em; height: 10em;"/>
-      {{#if own_page}}
       <div class="absolute" style="top: unset; left: unset; bottom: 0; right: 0;">
         <a href="/my-files"><button type="button" name="button">Change Image</button></a>
       </div>
-      {{/if}}
     </div>
   </div>
-  {{#if own_page}}
   <div class="tr">
     <div class="td center">
-      <a href='/user/{{user.url}}/edit'>Edit</a>
+      <a href='/user/{{user.url}}'>Stop Editing<br>(Make sure you save your changes by clicking "Save" below)</a>
     </div>
   </div>
-  {{/if}}
   <div class="tr padding">
-    <div class="td round background padding center">
-      <h1>{{user.display_name}}</h1>
+    <div class="td round background padding">
+      <span>Display Name:</span>
+      <input type="text" name="display_name" value="{{user.display_name}}">
+    </div>
+  </div>
+  <div class="tr center padding">
+    <div class="td round background padding">
+      <span>Username:</span>
+      <input type="text" name="username" placeholder="Username:" value="{{user.username}}"/>
     </div>
   </div>
 </div>
@@ -31,25 +35,10 @@
       {{#with user}}
       <div class="tr">
         <span class="td">Name:</span>
-        <span class="td">{{first_name}}{{#if last_name}} {{last_name}}{{/if}}</span>
-      </div>
-      <div class="tr">
-        <span class="td">Location:</span>
-        <span class="td">{{location}}</span>
-      </div>
-      <div class="tr">
-        <span class="td">Joined Excelsior:</span>
-        <span class="td">{{created_at}}</span>
+        <input type="text" name="first_name" placeholder="First Name:" value="{{first_name}}" style="margin-right: 5px; margin-bottom: 5px;"/>
+        <input type="text" name="last_name" placeholder="Last Name:" value="{{last_name}}"/>
       </div>
       {{/with}}
-    </div>
-    <div class="fullwidth padding">
-      <h3 class="center padding">Working Skills</h3>
-      <div class="fullwidth padding"></div>
-    </div>
-    <div class="fullwidth padding">
-      <h3 class="center padding">Working History</h3>
-      <div class="fullwidth padding center"><button type="button">Load Work History</button></div>
     </div>
   </div>
 {{! Stats / Skills}}
@@ -57,15 +46,6 @@
   <h2 class="center padding">Excelsior Skills</h2>
   <hr>
   <div class="fullwidth padding"></div>
-</div>
-{{! Comments}}
-<div class="island round border dark background center" style="max-width: 50em; margin-bottom: 1em;">
-  <h2 class="center padding">Comments</h2>
-  <hr>
-  <div class="island padding" style="max-width: 30em;">
-    {{> response_field response-text="Comment here..."}}
-  </div>
-  <div class="table fullwidth padding"></div>
 </div>
   {{!--
   <div class="td" style="vertical-align: top;">
@@ -96,3 +76,7 @@
   </div>
   --}}
 </div>
+{{#if edit}}
+<input type="submit" value="Save" style="max-width: 40em;">
+</form>
+{{/if}}

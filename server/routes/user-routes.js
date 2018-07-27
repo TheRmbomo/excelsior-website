@@ -107,46 +107,26 @@ app.use('/user/:id', async (req, res, next) => {
   id.splice(2)
   if (!id[0]) return next()
 
-  var q, user, userId,
-  temp_table = 't' + new Buffer(uuidParse(uuid())).toString('hex')
+  var q
 
   if (id.length === 1) {
     return next()
-    // username
-      // Unique, redirect
-      // Shared, we've found multiple
-    // id
-      // Match
-    // If Match, redirect
   } else if (id[0] === 'user') {
     q = await pgQuery(`SELECT id, shortened_id FROM users
-    WHERE shortened_id=$1;`, [new Buffer(id[1], 'hex')])
+    WHERE shortened_id=$1 AND username IS NULL;`, [new Buffer(id[1], 'hex')])
+    .then(q => {
+      if (!q.rows.length) return
+      return q
+    })
     .catch(e => {
       console.log(Error(e))
       return
     })
   } else {
-    q = await pgQuery(`CREATE TABLE ${temp_table} AS (SELECT id, shortened_id
-    FROM users WHERE username=$1);`, [id[0]])
-    .then(async () => {
-      q = await pgQuery(`SELECT * FROM ${temp_table};`)
-      if (!q.rows.length) return // Username didn't match anyone
-      else if (q.rows.length === 1) { // Unique username
-        userId = q.rows[0].shortened_id.toString('hex')
-        if (userId !== id[1]) {
-          res.redirect(`/user/${id[0]}-${userId}`)
-          return 'redirect'
-        }
-      } else { // Shared username
-        q = await pgQuery(`SELECT * FROM ${temp_table}
-        WHERE shortened_id=$1;`, [new Buffer(id[1], 'hex')])
-        if (!q.rows.length) return // Unknown id
-        else if (q.rows.length > 1) { // Id collision
-          console.log(Error('SHORTENED_ID COLLISION'))
-          // TODO: Handle s_id collisions, reassign them
-          return
-        }
-      }
+    q = await pgQuery(`SELECT id, shortened_id FROM users
+      WHERE username=$1 AND shortened_id=$2;`, [id[0], new Buffer(id[1], 'hex')])
+    .then(q => {
+      if (!q.rows.length) return
       return q
     })
     .catch(e => {
@@ -154,14 +134,10 @@ app.use('/user/:id', async (req, res, next) => {
       q = undefined
     })
   }
-  if (!q) return next()
-  if (q === 'redirect') return
+  if (!q || !q.rows.length) return next()
 
-  user = q.rows[0]
-  userId = user.shortened_id.toString('hex')
-  user.url = `${id[0]}-${userId}`
-  pgQuery(`DROP TABLE IF EXISTS ${temp_table};`)
-  .catch(e => console.log(Error(e)))
+  let user = q.rows[0]
+  user.url = `${id[0]}-${user.shortened_id.toString('hex')}`
 
   if (!user) return next()
 
@@ -196,7 +172,7 @@ userRouter.get('/edit', (req, res, next) => {
 
   if (user.id !== req.user.id) return res.redirect(`/user/${user.url}`)
 
-  res.render('user_profile.hbs', {
+  res.render('user_profile_edit', {
     edit: true
   })
 })
@@ -259,7 +235,7 @@ userRouter.get('/paths', (req, res, next) => {
       listings.push({group_name: `Managed Paths`, paths})
     }),
     pgQuery(`SELECT shortened_id, name, display_name, image_path, last_modified
-    FROM paths WHERE id = ANY((SELECT following_paths FROM users WHERE id=$1)::uuid[])
+    FROM paths WHERE id = ANY((SELECT paths_following FROM users WHERE id=$1)::uuid[])
     ORDER BY last_modified DESC;`, [req.viewedUser.id])
     .then(q => {
       if (!q.rows.length) no_paths = true
@@ -314,11 +290,12 @@ app.post('/edit-profile', express.json(), express.urlencoded({extended: true}), 
         return
       case 'username':
         req.body[key] = req.body[key].split(/\W/).join('')
+        if (!req.body[key]) req.body[key] = null
         break
     }
   })
   let update_keys = bodyKeys.map(key => `${key}`).join(','),
-  update_values = Object.values(req.body).map(value => value.trim()),
+  update_values = Object.values(req.body).map(value => value ? value.trim() : null),
   update_values_spot = (length => {
     // +1 and >2 to make room for the user id
     for (var i=length+1, array=[]; array.push('$'+i), i>2; i--)

@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
 const cookie = require('cookie');
+const valid = require('validator');
 
 var ws = new WebSocket.Server({
   port: 3002,
@@ -26,17 +27,17 @@ ws.validateString = (string, path) => {
   let minlength = 6;
   if (!string) {
     error[path] = {path, kind: 'required'};
-  } else if (!validator.isLength(string, {min: minlength})) {
+  } else if (!valid.isLength(string, {min: minlength})) {
     error[path] = {path, kind: 'minlength', properties: {minlength}};
   }
   if (Object.keys(error).length) return {error};
-  let result = validator.escape(string);
+  let result = valid.escape(string);
   return result;
 };
 
 ws.validateURL = url => {
   if (!url) return {error: {url: {path: 'url', kind: 'required'}}};
-  else if (!validator.isURL(url)) return {error: {url: {path: 'url', kind: 'invalid'}}};
+  else if (!valid.isURL(url)) return {error: {url: {path: 'url', kind: 'invalid'}}};
   let result = url
   .replace('watch?v=', 'embed/')
   .replace('&feature=em-uploademail', '');

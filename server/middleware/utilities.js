@@ -17,8 +17,8 @@ app.use((req, res, next) => {
     hours = (hours === 0) ? hours = 12 : hours
     minutes = (minutes < 10) ? `0${minutes}` : minutes
 
-    let newDate = `${months[month]} ${day}${suffix[day-1]}, ${year}`
-    if (useTime) newDate += ` ${hours}:${minutes} ${ampm} ET`
+    let newDate = `${months[month]}\xa0${day}${suffix[day-1]},\xa0${year}`
+    if (useTime) newDate += ` ${hours}:${minutes}\xa0${ampm}\xa0ET`
     return newDate
   }
   next()
