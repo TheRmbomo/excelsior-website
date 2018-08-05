@@ -1,6 +1,7 @@
-const WebSocket = require('ws');
-const cookie = require('cookie');
-const valid = require('validator');
+const WebSocket = require('ws')
+const cookie = require('cookie')
+const valid = require('validator')
+const {redisClient} = require('./middleware/passport')
 
 var ws = new WebSocket.Server({
   port: 3002,
@@ -20,59 +21,76 @@ var ws = new WebSocket.Server({
     concurrencyLimit: 10,
     threshold: 1024,
   }
-});
+})
 
 ws.validateString = (string, path) => {
-  let error = {};
-  let minlength = 6;
+  let error = {}
+  let minlength = 6
   if (!string) {
-    error[path] = {path, kind: 'required'};
+    error[path] = {path, kind: 'required'}
   } else if (!valid.isLength(string, {min: minlength})) {
-    error[path] = {path, kind: 'minlength', properties: {minlength}};
+    error[path] = {path, kind: 'minlength', properties: {minlength}}
   }
-  if (Object.keys(error).length) return {error};
-  let result = valid.escape(string);
-  return result;
-};
+  if (Object.keys(error).length) return {error}
+  let result = valid.escape(string)
+  return result
+}
 
 ws.validateURL = url => {
-  if (!url) return {error: {url: {path: 'url', kind: 'required'}}};
-  else if (!valid.isURL(url)) return {error: {url: {path: 'url', kind: 'invalid'}}};
+  if (!url) return {error: {url: {path: 'url', kind: 'required'}}}
+  else if (!valid.isURL(url)) return {error: {url: {path: 'url', kind: 'invalid'}}}
   let result = url
   .replace('watch?v=', 'embed/')
-  .replace('&feature=em-uploademail', '');
-  return result;
-};
+  .replace('&feature=em-uploademail', '')
+  return result
+}
 
-ws.on('connection', (socket, req) => {
-  socket.events = {};
-  socket._on = socket.on;
-  socket.emitu = function (event, data) {
-    if (typeof event !== 'string') return;
+ws.on('connection', async (socket, req) => {
+  socket.events = {}
+  socket._on = socket.on
+  socket._send = socket.send
+  socket.send = function (event, data) {
+    if (typeof event !== 'string') return
 
-    let req = {event};
-    if (data) req.data = data;
+    let req = {event}
+    if (data) req.data = data
 
-    let res = this.send(JSON.stringify(req));
-  };
+    let res = this._send(JSON.stringify(req))
+  }
+
+  socket._on('message', req => {
+    try {
+      if (req === 'ping') return socket._send(`pong`)
+      req = JSON.parse(req)
+    } catch (e) {return}
+    if (!socket.events[req.event]) return
+
+    let done = false,
+    callback = (req.callback !== undefined) ? (function () {
+      if (done) return console.error('Callback already sent')
+      let args = Array.from(arguments)
+      socket.send(`callback-${req.event}`, {event: req.event, args})
+      done = true
+    }) : () => {}
+    socket.events[req.event](req.data, callback)
+  })
+
   socket.on = function (event, callback) {
-    if (typeof event !== 'string' || typeof callback !== 'function') return;
-    this._on('message', req => {
-      req = JSON.parse(req);
-      if (req.event !== event) return;
+    if (typeof event !== 'string' || typeof callback !== 'function') return
+    if (socket.events[event]) return console.log(`Event already defined: ${event}`)
+    socket.events[event] = callback
+  }
 
-      let socket = this, done = false;
-      let res_callback = (req.hasCallback !== undefined) ? function () {
-        if (done) return console.error('Callback already sent');
-        let args = Array.prototype.map.call(arguments, arg => arg);
-        socket.emitu(`callback-${event}`, {event, message: 'three', args});
-        done = true;
-      } : () => console.error('No callback provided');
-      res_callback = res_callback.bind(res_callback);
-      callback(req.data, res_callback);
-    });
-  };
-  socket.cookies = (req.headers.cookie) ? cookie.parse(req.headers.cookie) : undefined;
-});
+  socket.cookies = (req.headers.cookie) ? cookie.parse(req.headers.cookie) : undefined
+  let sessionCookie = (socket.cookies && socket.cookies['connect.sid']) ?
+    socket.cookies['connect.sid'].slice(2).split('.')[0] : null
+  socket.user = null
+  if (sessionCookie) {
+    socket.session = await new Promise(resolve => redisClient.get(sessionCookie, (err, ses) => resolve(ses.passport)))
+    if (socket.session.user) socket.user = {id: socket.session.user}
+  }
 
-module.exports = ws;
+  ws.emit('ready', socket, req)
+})
+
+module.exports = ws

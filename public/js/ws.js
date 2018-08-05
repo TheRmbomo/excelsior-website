@@ -1,50 +1,73 @@
-WebSocket.prototype.isOpen = async function () {
-  for (let timeout = 30000; (!this.readyState && timeout); timeout--) {
-    await wait(1);
-    if (timeout === 1) console.error('WebSocket timed out.');
-  }
-  return 'Connected';
-};
-
-WebSocket.prototype.emit = async function (event, data, callback) {
-  if (typeof event !== 'string') return;
+WebSocket.prototype.emit = function (event, data, callback) {
+  if (typeof event !== 'string') return
   else if (typeof data === 'function') {
-    callback = data;
-    data = {};
-  } else if (typeof callback !== 'function') callback = undefined;
+    callback = data
+    data = {}
+  } else if (typeof callback !== 'function') callback = undefined
 
-  await this.isOpen();
-
-  let req = {event, data};
-  if (callback) req.callback = true;
-  this.send(JSON.stringify(req));
-  if (!callback) return;
-
+  let req = {event, data}
+  if (callback) req.callback = true
+  if (ws.readyState === 1) ws.send(JSON.stringify(req))
+  else {
+    new Promise(resolve => {
+      let interval = setInterval(() => {
+        if (ws.available) return resolve(clearInterval(interval))
+      }, 50)
+    })
+    .then(() => ws.send(JSON.stringify(req)))
+  }
+  if (!callback) return
   // Callback
-  let socket = this;
-  let cb = function () {
-    callback.apply(null, arguments);
-    delete socket.events[`callback-${event}`];
-  };
-  cb = cb.bind(cb);
-  this.on(`callback-${event}`, cb);
+
+  ws.on(`callback-${event}`, function () {
+    callback.apply(null, arguments)
+    delete ws.events[`callback-${event}`]
+  })
 };
 
 WebSocket.prototype.on = function (setEvent, callback) {
-  if (!this.events) this.events = {};
-  if (typeof setEvent !== 'string') return {on: () => {throw new Error('Invalid event name')}};
-  if (typeof callback !== 'function') return this;
+  if (typeof setEvent !== 'string') return {on: () => {throw new Error('Invalid event name')}}
+  if (typeof callback !== 'function') return this
+  if (!this.events) {
+    return {on: () => {console.error('Unable to create event'); return this}}
+  }
 
-  if (!this.onmessage) this.onmessage = eventObj => {
-    let req = JSON.parse(eventObj.data), {data} = req, getEvent = req.event;
-    let res = (data.args) ? data.args : [data];
+  if (Object.keys(this.events).indexOf(setEvent) === -1) this.events[setEvent] = callback
+  // console.dir(Object.keys(ws.events).join(','));
+  // console.dir(Object.values(ws.events).join(','));
+
+  return this
+}
+
+var ws = new WebSocket('ws://192.168.1.223:3002')
+ws.events = {}
+ws.onopen = function onopen() {
+  ws.onmessage = eventObj => {
+    if (eventObj.data === 'pong') return this.available = true
+    try {
+      var req = JSON.parse(eventObj.data), {data} = req, getEvent = req.event,
+      res = (data.args) ? data.args : [data]
+    } catch (e) {return}
     Object.keys(this.events).map(anEvent => {
-      if (anEvent === getEvent) this.events[getEvent].apply(null, res);
-    });
-  };
+      if (anEvent === getEvent) this.events[getEvent].apply(this, res)
+    })
+  }
+  ws.onclose = () => {
+    var interval = setInterval(() => {
+      if (ws.readyState === 0) return
+      if (ws.readyState === 1) return clearInterval(interval)
 
-  if (Object.keys(this.events).indexOf(setEvent) === -1) this.events[setEvent] = callback;
-  return this;
-};
-
-var ws = new WebSocket('ws://localhost:3002');
+      let oldWs_events = ws.events
+      ws = new WebSocket('ws://192.168.1.223:3002')
+      ws.events = oldWs_events
+      ws.onopen = onopen
+    }, 50)
+  }
+  new Promise(resolve => {
+    let interval = setInterval(() => {
+      if (this.readyState !== 1) return
+      if (this.available) return resolve(clearInterval(interval))
+      ws.send('ping')
+    }, 50)
+  })
+}
