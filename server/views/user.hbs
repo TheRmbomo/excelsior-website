@@ -1,0 +1,61 @@
+{{#with user}}
+<div class="island round dark background center padding relative" style="max-width: 40em; margin-bottom: 1em;">
+  <h1 class="padding">{{display_name}}</h1>
+  {{#if own}}
+  <div class="absolute" style="top: 1em; right: 1em;">
+    <a href="{{url}}/edit"><button type="button" class="border">Edit</button></a>
+  </div>
+  {{/if}}
+  <table class="island fullwidth round background padding" style="max-width: 30em; margin-bottom: 0.5em;">
+    <tr>
+      <td>Name:</td>
+      <td>{{name}}</td>
+    </tr>
+    <tr>
+      <td>Location:</td>
+      <td>{{location}}</td>
+    </tr>
+    <tr>
+      <td>Joined Excelsior:</td>
+      <td>{{created_at}}</td>
+    </tr>
+  </table>
+  <div class="">
+    <a href="{{url}}/paths"><button type="button">View Paths</button></a>
+  </div>
+</div>
+{{! Description}}
+<div class="island round dark background padding" style="max-width: 40em; margin-bottom: 1em; word-break: break-word;">
+  <h2 class="center padding">Description</h2>
+  <div class="round background padding">{{description}}</div>
+</div>
+{{! Stats / Skills}}
+<div class="island round dark background padding" style="max-width: 40em; margin-bottom: 1em;">
+  <h2 class="center padding">Excelsior Skills</h2>
+  <div class="fullwidth padding"></div>
+</div>
+{{! Comments}}
+{{!--
+<div class="island round border dark background center" style="max-width: 50em; margin-bottom: 1em;">
+  <h2 class="center padding">Comments</h2>
+  <hr>
+  <div class="island padding" style="max-width: 30em;">
+    {{> response_field response-text="Comment here..."}}
+  </div>
+  <div class="table fullwidth padding"></div>
+</div>
+--}}
+  {{!--
+  <div class="td" style="vertical-align: top;">
+    {{! Activity}}
+    <div class="round border dark background" style="margin-bottom: 5px; min-height: 12em;">
+      <h2 class="center padding">Activity</h2>
+      <hr>
+      <div class="padding">
+        Completed Path of Learning!: Mindset <a>Congratulate him!</a>
+      </div>
+    </div>
+  </div>
+</div>
+--}}
+{{/with}}

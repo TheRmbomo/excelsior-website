@@ -6,3 +6,4 @@ public/files/*
 !public/files/.gitkeep
 public/img/*
 !public/img/default*
+server/test.js

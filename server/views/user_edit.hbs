@@ -1,0 +1,68 @@
+{{#with user}}
+<div class="island round dark background center padding relative . user" id={{id}} style="max-width: 40em;">
+  {{! Image and Name}}
+  <div class="absolute" style="top: 1em; left: 1em;">
+    <a href="{{url}}"><button type="button" class="border">Back</button></a>
+  </div>
+  <h2 style="margin: 0.5em 0em;">User Settings:<br>{{display_name}}</h2>
+  <div class="island fullwidth table" style="border-spacing: 0;">
+    <div class="tr">
+      <div class="td" style="width: 2em;">
+        <button type="button" style="background-image: url(/img/arrow_left.png); background-size: 80% 100%; background-repeat: no-repeat; background-position: center;"></button>
+      </div>
+      <div class="td" style="overflow: hidden; white-space: nowrap;">
+        <button type="button" style="border-radius: 5px 5px 0 0;">Display</button>
+        <button type="button" style="border-radius: 5px 5px 0 0;">Private</button>
+        <button type="button" style="border-radius: 5px 5px 0 0;">Manage</button>
+      </div>
+      <div class="td" style="width: 2em;">
+        <button type="button" style="background-image: url(/img/arrow_right.png); background-size: 80% 100%; background-repeat: no-repeat; background-position: center;"></button>
+      </div>
+    </div>
+  </div>
+  <div id="display" class="round background padding overflow" style="max-height: 30em;">
+    <div>
+      <input type="radio" id="is_public" name="is_public" value="true" class=". change" {{is_public}} style="display: none;">
+      <input type="radio" id="is_private" name="is_public" value="false" class=". change" {{is_private}} style="display: none;">
+    </div>
+    <div class="padding" style="margin-bottom: 0.5em;">
+      <label for="is_public" class="round light background padding">Public</label>
+      <label for="is_private" class="round light background padding">Private</label>
+    </div>
+    <div style="margin-bottom: 0.5em;">
+      <label for="display_name">Display Name</label><br>
+      <span>
+        <input id="display_name" type="text" name="display_name" value="{{display_name}}" class=". change" autocomplete="off">
+      </span>
+    </div>
+    <div style="margin-bottom: 0.5em;">
+      <label for="username">URL (Username)<br>
+      /user/</label><span>
+        <input id="username" type="text" name="username" value="{{username}}" class=". change" autocomplete="off" style="width: 10em;"/>
+      </span><label for="username">-{{shortened_id}}</label>
+    </div>
+    <div style="margin-bottom: 0.5em;">
+      <label for="first_name">First / Last Name</label><br>
+      <span style="width: 7em;">
+        <input id="first_name" type="text" name="first_name" value="{{first_name}}" class=". change" placeholder="First Name" style="width: 7em;">
+      </span>
+      <span>
+        <input id="last_name" type="text" name="last_name" value="{{last_name}}" class=". change" placeholder="Last Name" style="width: 7em;">
+      </span>
+    </div>
+    <div style="margin-bottom: 0.5em;">
+      <label for="description">Bio</label><br>
+      <textarea id="description" name="description" class="light background text padding . change" rows="4" cols="80">{{description}}</textarea>
+    </div>
+    <div style="margin-bottom: 0.5em;">
+      <label for="location">Location</label><br>
+      <input id="location" type="text" name="location" class=". change" value="{{location}}">
+    </div>
+    <div style="margin-bottom: 0.5em;">
+      <label for="birthday">Birthday</label><br>
+      <input id="birthday" type="date" name="birthday" class=". change" value="{{birthday}}">
+    </div>
+  </div>
+</div>
+{{/with}}
+{{> pageJS js="user_edit"}}

@@ -65,14 +65,11 @@ let runDB = (async () => {
     last_name varchar(255),
     display_name varchar(255),
     avatar_path varchar(255),
-    age int2,
+    birthday date,
     language varchar(255),
     friends uuid[],
     currency real default 0.0,
-    paths_following uuid[],
-    auth_keys varchar(255)[],
-    path_keys uuid[],
-    resource_keys uuid[],
+    paths_following uuid[] NOT NULL default array[]::uuid[],
     created_at timestamp default now(),
     last_logged_in timestamp default now()
   );`)
@@ -85,10 +82,10 @@ let runDB = (async () => {
     image_path varchar(255),
     language varchar(255),
     tags varchar(255)[100],
+    rating real default 0.0,
     mongo_id varchar(24),
     created_by uuid,
     created_at timestamp default now(),
-    contributors uuid[],
     last_modified_by uuid,
     last_modified_at timestamp default now()
   );`)

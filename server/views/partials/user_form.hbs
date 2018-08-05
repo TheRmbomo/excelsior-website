@@ -1,17 +1,20 @@
 <div class="island round border dark background" style="min-width: 12em; max-width: 30em;">
-  <form action={{#if createUser}}"/create-user"{{else}}"/login-user"{{/if}} method="post">
+  <form action={{#if createUser}}"/signup"{{else}}"/login-user"{{/if}} method="{{#if createUser}}get{{else}}post{{/if}}">
     <h2 class="unset center padding">
       {{#if createUser}}Create a Free Account!{{else}}Log in to Existing Account{{/if}}
     </h2>
     <div class="fullwidth table padding">
       <div class="tr">
         <label for="email" class="td" style="width: 5em;">Email:</label>
-        <input id="email" class="td padding" name="email"/>
+        <input id="email" class="td padding" name="email" type="email"/>
       </div>
+      {{#if createUser}}
+      {{else}}
       <div class="tr">
         <label for="password" class="td">Password:</label>
-        <input id="password" class="td padding" name="password" type="password" autocomplete={{#if createUser}}"new_password"{{else}}"current_password"{{/if}}/>
+        <input id="password" class="td padding" name="password" type="password" autocomplete="current_password"/>
       </div>
+      {{/if}}
     </div>
     <div class="fullwidth table">
       <div class="tr">
@@ -19,7 +22,7 @@
           {{#if createUser}}
           Already have an account? <a href="/login">Log in here!</a>
           {{else}}
-          Don't have an account? <a href="/">Sign up here!</a>
+          Don't have an account? <a href="/#signup">Sign up here!</a>
           {{/if}}
         </span>
         <div class="td padding" style="width: 5em;">

@@ -1,0 +1,39 @@
+<div class="background center padding">
+  <h1>User Creation</h1>
+</div>
+<form action="/create-user" method="post">
+  <div class="island round dark background padding" style="max-width: 40em;">
+    <h3 class="padding">Account Information</h3>
+    <div class="island table" style="min-width: 10em; width: 100%; max-width: 30em;">
+      <div class="tr">
+        <label for="email" class="td" style="width: 8em;">Email</label>
+        <input id="email" class="td" type="text" name="email" value="{{email}}" {{#if email}}{{else}}autofocus{{/if}}>
+      </div>
+      <div class="tr">
+        <label for="password" class="td">Password</label>
+        <input id="password" class="td" type="password" name="password" autocomplete="new-password" {{#if email}}autofocus{{/if}}>
+      </div>
+      <div class="tr">
+        <label for="confirm_password" class="td">Confirm Password</label>
+        <input id="confirm_password" class="td" type="password" name="confirm_password" autocomplete="new-password">
+      </div>
+    </div>
+    <hr>
+    <h3 class="padding">User Information</h3>
+    <div class="island table" style="min-width: 10em; width: 100%; max-width: 20em;">
+      <div class="tr">
+        <label for="display_name" class="td" style="width: 6em;">Display Name</label>
+        <input id="display_name" class="td" type="text" name="display_name">
+      </div>
+      <div class="tr">
+        <label for="name" class="td">Name</label>
+        <input id="name" class="td" type="text" name="full_name" value="{{name}}" placeholder="First and Last Name">
+      </div>
+    </div>
+    <div style="margin-bottom: 1em;">
+      <input type="checkbox" name="agreement" style="width: 1em;">
+      You agree to our <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a>
+    </div>
+    <input type="submit" value="Sign up">
+  </div>
+</form>
