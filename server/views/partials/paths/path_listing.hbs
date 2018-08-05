@@ -1,12 +1,23 @@
-<div class="tr">
-  <div class="td round border light background padding">
+<div class="tr" id="{{id}}">
+  <div class="td round border light background relative" style="padding: 0.2em;">
+    {{#if owned}}
+    <div class="island absolute round green background" style="right: 0.5em; padding: 0 0.2em;">
+      Creator
+    </div>
+    {{/if}}
     <div class="fullwidth table">
       <div class="tr">
         <div class="td" style="width: 5em;">
-          <img src="/img/thermbomo110.png" style="width: 5em; height: 4em;">
+          <img src="/img/thermbomo110.png" style="width: 5em; height: 4em; vertical-align: middle;">
         </div>
-        <div class="td padding center">{{display_name}}<br><span style="font-size: 0.8em;">Modified: {{last_modified}}</span></div>
-        <div class="td center" style="width: 3em;">
+        <div class="td padding center">
+          <span style="font-weight: 700;">{{display_name}}</span><br>
+          <span style="font-size: 0.8em;">
+            {{author}}
+            <em>{{last_modified_at}}</em>
+          </span>
+        </div>
+        <div class="td center" style="width: 3.5em;">
           <a href="{{url}}"><button class="border background">Enter</button></a>
         </div>
       </div>
@@ -14,16 +25,17 @@
     <hr>
     <div class="fullwidth table">
       <div class="tr">
-        <button type="button" class="td island fullwidth" style="max-width: 25em;">View Description / Rating</button>
+        <div class="td">{{description}}</div>
+        <div class="td center" style="width: 5em;">{{rating}}</div>
       </div>
     </div>
     <div class="fullwidth table">
       <div class="tr">
         <div class="td center">
           {{#if following}}
-          <div type="button" class="island round green background half padding">Following</div>
+          <button type="button" class="border green background half follow">Following</button>
           {{else}}
-          <a href="#"><button type="button" class="border half">Follow</button></a>
+          <button type="button" class="border half follow">Follow</button>
           {{/if}}
         </div>
       </div>

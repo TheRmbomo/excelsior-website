@@ -24,13 +24,9 @@ html, body {
     pointer-events: auto;
   }
 
-.absolute, footer, .inset {
+.absolute, footer {
   position: absolute;
 }
-  .absolute {
-    top: 0;
-    left: 0;
-  }
 
 .relative, body {
   position: relative;
@@ -86,7 +82,7 @@ html, body {
 .margin {
   margin: 0.5em;
 }
-.padding, input {
+.padding, input, select {
   padding: 0.5em;
 }
 
@@ -100,7 +96,7 @@ html, body {
   .dark.background {
     background-color: #222222;
   }
-  .light.background, input {
+  .light.background, input, select {
     background-color: #555566;
   }
     .translucent.light {
@@ -114,7 +110,7 @@ html, body {
   overflow: auto;
 }
 
-.fullwidth, .full, .tr {
+.fullwidth, .full, .tr, select, input {
   width: 100%;
 }
 .fullheight, .full {
@@ -137,7 +133,7 @@ html, body {
   width: 50%;
 }
 
-.round, input, button, img, textarea {
+.round, input, button, img, textarea, select {
   border-radius: 5px;
 }
 
@@ -145,7 +141,7 @@ html, body {
   vertical-align: top;
 }
 
-.text, body, button, input {
+.text, body, button, input, select {
   font-family: "Cabin", "Trebuchet-MS", sans-serif;
   color: #BBBBBB;
 }
@@ -215,6 +211,9 @@ button {
   font-family: "Cabin", sans-serif;
   font-size: 1em;
   padding: 0.5em;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
   button:disabled {
     background-color: #404050;
@@ -223,7 +222,9 @@ button {
 
 input {
   font-size: 1em;
-  width: 100%;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 input:read-only {
@@ -250,9 +251,10 @@ textarea {
   max-height: 30vh;
 }
 
-.inset {
-  bottom: 10px;
-  right: 10px;
+select {
+  font-size: 1em;
+  -webkit-appearance: none;
+  border: unset;
 }
 
 footer {

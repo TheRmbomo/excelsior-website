@@ -1,8 +1,13 @@
-<div class="island round dark background center padding" style="max-width: 40em; margin-bottom: 1em;">
-  {{#with path}}
+{{#with path}}
+<div class="island round dark background center padding relative . path" style="max-width: 40em; margin-bottom: 1em;" id={{id}}>
   {{#if image_path}}<img src="{{image_path}}" style="width: 15em; height: 12em;">{{/if}}
   <h1 class="padding">{{display_name}}</h1>
-  <table class="island fullwidth round padding background" style="max-width: 30em;">
+  {{#if owned}}
+  <div class="absolute" style="top: 1em; right: 1em;">
+    <a href="{{url}}/edit"><button type="button" class="border">Edit</button></a>
+  </div>
+  {{/if}}
+  <table class="island fullwidth round background padding" style="max-width: 30em; margin-bottom: 0.5em;">
     <tr>
       <td>Author:</td>
       <td><a href="{{authorURL}}">{{author}}</a></td>
@@ -17,13 +22,11 @@
       <td><a href="#">{{contentCount}}</a></td>
     </tr>--}}
   </table>
-  {{/with}}
+  <button type="button" class="border half . follow">Follow</button>
 </div>
 <div class="island round dark background padding" style="max-width: 40em; margin-bottom: 1em;">
   <h2 class="center padding">Description</h2>
-  <div class="island round background padding" style="max-width: 30em;">
-    {{path.description}}
-  </div>
+  <div class="round background padding">{{description}}</div>
 </div>
 <div class="island round dark background padding" style="max-width: 40em; margin-bottom: 1em;">
   <h2 class="center padding">Reviews</h2>
@@ -33,3 +36,5 @@
   <h2 class="center padding">Comments</h2>
   <div class="island round background padding"></div>
 </div>
+{{/with}}
+{{> pageJS js="path"}}

@@ -20,6 +20,7 @@ Object.assign(app.locals, {
 
 module.exports = {app, httpServer}
 require('./routes/public-routes')
+require('./test')
 // --
 
 // Middleware
@@ -47,8 +48,11 @@ app.get('/not-found', (req, res) => {
     title: 'Resource not found'
   })
 })
-
-app.all('*', (req, res) => {
+.use((err, req, res, next) => {
+  if (err === 'nf') return res.redirect('/not-found')
+  next(err)
+})
+.all('*', (req, res) => {
   res.redirect('/not-found')
 })
 // --

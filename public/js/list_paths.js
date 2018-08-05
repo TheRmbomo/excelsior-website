@@ -2,7 +2,7 @@ Array.from(_class('follow'), c => {
   let id
   c.addEventListener('click', event => {
     event.preventDefault()
-    let follow = event.currentTarget, row = getParents(1, event.currentTarget)
+    let follow = event.currentTarget, row = getParents(5, event.currentTarget)
     id = row.id
     if (!id) return console.log('No path ID')
     ws.emit('follow_path', {id}, res => {
@@ -15,13 +15,5 @@ Array.from(_class('follow'), c => {
         follow.innerHTML = 'Follow'
       }
     })
-  })
-})
-
-ws.emit('is_following', {id: Array.from(_class('path'))[0].id}, res => {
-  if (!res) return
-  Array.from(_class('follow'), follow => {
-    follow.classList.add('green','background')
-    follow.innerHTML = 'Following'
   })
 })
