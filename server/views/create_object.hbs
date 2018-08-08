@@ -1,0 +1,47 @@
+<div class="center island round background padding">
+  <h2>{{header}}</h2>
+</div>
+<div class="island center dark background round padding" style="max-width: 50em;">
+  <form action="/create-{{type}}" method="post">
+    {{!--
+    <img src="/img/thermbomo110.png" class="island" style="width: 15em; height: 12em; display: block;">
+    <input type="file" name="file" accept="image/*" style="max-width: 16em; margin-bottom: 0.5em;">
+    --}}
+    <input type="hidden" name="id" value="{{id}}" readonly>
+    <div class="left fullwidth table list">
+      <div class="tr">
+        <div class="td">
+          <div>
+            <label for="display_name">Name:</label>
+            <input id="display_name" type="text" name="display_name">
+          </div>
+        </div>
+      </div>
+      <div class="tr">
+        <div class="td">
+          <div>
+            Author:
+            {{author.name}}
+          </div>
+        </div>
+      </div>
+      <div class="tr">
+        <div class="td">
+          <div>
+            <label for="description">Description:</label>
+            <textarea id="description" class="fullwidth padding text" name="description"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="tr">
+        <div class="td">
+          <div>
+            <label for="tags">Tags:</label>
+            <textarea id="tags" class="fullwidth padding text" name="tags"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <input type="submit" value="{{create}}" style="max-width: 20em;">
+  </form>
+</div>

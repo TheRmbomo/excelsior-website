@@ -98,6 +98,7 @@ let runDB = (async () => {
     image_path varchar(255),
     language varchar(255),
     tags varchar(255)[100],
+    rating real default 0.0,
     mongo_id varchar(24),
     created_by uuid,
     created_at timestamp default now(),

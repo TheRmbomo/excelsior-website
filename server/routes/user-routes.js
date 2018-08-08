@@ -217,12 +217,15 @@ userRouter.get('/paths', (req, res, next) => {
   ])
   .then(listings => {
     listings = listings.filter(i => !!i).reduce((text, group) => {
-      return new hbs.SafeString(text + hbs.compile('{{> path_group}}')(group))
+      return new hbs.SafeString(text + hbs.compile('{{> results_group}}')(group))
     }, '')
-    return res.render('list_paths', {
+    return res.render('list_results', {
       title: 'Your Paths of Learning',
       back: {url: user.url},
-      listings
+      type: 'path',
+      create: 'Create a Path of Learning',
+      listings,
+      js: 'list_paths'
     })
   })
   .catch(e => {

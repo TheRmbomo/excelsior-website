@@ -1,0 +1,53 @@
+<div id="display" class="round background padding overflow" style="max-height: 30em;">
+  <div class="fullwidth table list">
+    <div class="tr">
+      <div class="td">
+        <div class="padding">
+          <input type="radio" id="is_public" name="is_public" value="true" class=". change" {{is_public}} style="display: none;">
+          <input type="radio" id="is_private" name="is_public" value="false" class=". change" {{is_private}} style="display: none;">
+          <label for="is_public" class="round light background padding">Public</label>
+          <label for="is_private" class="round light background padding">Private</label>
+        </div>
+      </div>
+      <div class="td" style="width: 3em;"></div>
+    </div>
+    <div class="tr">
+      <div class="td">
+        <div>
+          <label for="display_name">Display Name</label><br>
+          <span>
+            <input id="display_name" type="text" name="display_name" value="{{display_name}}" class=". change" autocomplete="off">
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="tr">
+      <div class="td">
+        <div>
+          <label for="name">URL<br></label>
+          /user/<input id="name" type="text" name="name" value="{{username}}" class=". change" autocomplete="off" style="width: 10em;"/>-{{shortened_id}}
+        </div>
+      </div>
+    </div>
+    <div class="tr">
+      <div class="td">
+        <div>
+          <label for="description">Description</label><br>
+          <textarea id="description" name="description" class="light background text padding . change" rows="4" cols="80">{{description}}</textarea>
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-description"></button>
+      </div>
+    </div>
+    <div class="tr">
+      <div class="td">
+        <div>
+          <label for="tags">Tags</label><br>
+          <textarea id="tags" name="tags" class="light background text padding . change" rows="4" cols="80">{{tags}}</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{> pageJS js="resource_edit"}}

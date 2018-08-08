@@ -18,10 +18,12 @@
           </span>
         </div>
         <div class="td center" style="width: 3.5em;">
+          {{#if second_row}}{{else}}{{rating}}{{/if}}
           <a href="{{url}}"><button class="border background">Enter</button></a>
         </div>
       </div>
     </div>
+    {{#if second_row}}
     <hr>
     <div class="fullwidth table">
       <div class="tr">
@@ -40,5 +42,6 @@
         </div>
       </div>
     </div>
+    {{/if}}
   </div>
 </div>
