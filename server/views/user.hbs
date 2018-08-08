@@ -7,33 +7,43 @@
   </div>
   {{/if}}
   <table class="island fullwidth round background padding" style="max-width: 30em; margin-bottom: 0.5em;">
+    {{#if show_name}}
     <tr>
       <td>Name:</td>
       <td>{{name}}</td>
     </tr>
+    {{/if}}
+    {{#if show_location}}
     <tr>
       <td>Location:</td>
       <td>{{location}}</td>
     </tr>
+    {{/if}}
+    {{#if show_joinDate}}
     <tr>
       <td>Joined Excelsior:</td>
       <td>{{created_at}}</td>
     </tr>
+    {{/if}}
   </table>
   <div class="">
     <a href="{{url}}/paths"><button type="button">View Paths</button></a>
   </div>
 </div>
 {{! Description}}
+{{#if show_description}}
 <div class="island round dark background padding" style="max-width: 40em; margin-bottom: 1em; word-break: break-word;">
   <h2 class="center padding">Description</h2>
   <div class="round background padding">{{description}}</div>
 </div>
+{{/if}}
 {{! Stats / Skills}}
+{{#if show_excelsiorSkills}}
 <div class="island round dark background padding" style="max-width: 40em; margin-bottom: 1em;">
   <h2 class="center padding">Excelsior Skills</h2>
   <div class="fullwidth padding"></div>
 </div>
+{{/if}}
 {{! Comments}}
 {{!--
 <div class="island round border dark background center" style="max-width: 50em; margin-bottom: 1em;">

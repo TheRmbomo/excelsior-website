@@ -1,68 +1,147 @@
-{{#with user}}
-<div class="island round dark background center padding relative . user" id={{id}} style="max-width: 40em;">
-  {{! Image and Name}}
-  <div class="absolute" style="top: 1em; left: 1em;">
-    <a href="{{url}}"><button type="button" class="border">Back</button></a>
-  </div>
-  <h2 style="margin: 0.5em 0em;">User Settings:<br>{{display_name}}</h2>
-  <div class="island fullwidth table" style="border-spacing: 0;">
+<div id="display" class="round background padding overflow" style="max-height: 30em;">
+  <div class="fullwidth table list">
     <div class="tr">
-      <div class="td" style="width: 2em;">
-        <button type="button" style="background-image: url(/img/arrow_left.png); background-size: 80% 100%; background-repeat: no-repeat; background-position: center;"></button>
+      <div class="td">
+        <div class="padding">
+          <input type="radio" id="is_public" name="is_public" value="true" class=". change" {{is_public}} style="display: none;">
+          <input type="radio" id="is_private" name="is_public" value="false" class=". change" {{is_private}} style="display: none;">
+          <label for="is_public" class="round light background padding">Public</label>
+          <label for="is_private" class="round light background padding">Private</label>
+        </div>
       </div>
-      <div class="td" style="overflow: hidden; white-space: nowrap;">
-        <button type="button" style="border-radius: 5px 5px 0 0;">Display</button>
-        <button type="button" style="border-radius: 5px 5px 0 0;">Private</button>
-        <button type="button" style="border-radius: 5px 5px 0 0;">Manage</button>
+      <div class="td" style="width: 3em;"></div>
+    </div>
+    <div class="tr">
+      <div class="td">
+        <div>
+          <label for="display_name">Display Name</label><br>
+          <span>
+            <input id="display_name" type="text" name="display_name" value="{{display_name}}" class=". change" autocomplete="off">
+          </span>
+        </div>
       </div>
-      <div class="td" style="width: 2em;">
-        <button type="button" style="background-image: url(/img/arrow_right.png); background-size: 80% 100%; background-repeat: no-repeat; background-position: center;"></button>
+    </div>
+    <div class="tr">
+      <div class="td">
+        <div>
+          <label for="username">URL (Username)<br></label>
+          /user/<input id="username" type="text" name="username" value="{{username}}" class=". change" autocomplete="off" style="width: 10em;"/>-{{shortened_id}}
+        </div>
       </div>
     </div>
-  </div>
-  <div id="display" class="round background padding overflow" style="max-height: 30em;">
-    <div>
-      <input type="radio" id="is_public" name="is_public" value="true" class=". change" {{is_public}} style="display: none;">
-      <input type="radio" id="is_private" name="is_public" value="false" class=". change" {{is_private}} style="display: none;">
+    <div class="tr">
+      <div class="td">
+        <div>
+          <label for="first_name">First / Last Name</label><br>
+          <input id="first_name" type="text" name="first_name" value="{{first_name}}" class=". change" placeholder="First Name" style="width: 6em;">
+          <input id="last_name" type="text" name="last_name" value="{{last_name}}" class=". change" placeholder="Last Name" style="width: 6em;">
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-name"></button>
+      </div>
     </div>
-    <div class="padding" style="margin-bottom: 0.5em;">
-      <label for="is_public" class="round light background padding">Public</label>
-      <label for="is_private" class="round light background padding">Private</label>
+    <div class="tr">
+      <div class="td">
+        <div>
+          <label for="description">Bio</label><br>
+          <textarea id="description" name="description" class="light background text padding . change" rows="4" cols="80">{{description}}</textarea>
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-description"></button>
+      </div>
     </div>
-    <div style="margin-bottom: 0.5em;">
-      <label for="display_name">Display Name</label><br>
-      <span>
-        <input id="display_name" type="text" name="display_name" value="{{display_name}}" class=". change" autocomplete="off">
-      </span>
+    <div class="tr">
+      <div class="td">
+        <div>
+          <label for="location">Location</label><br>
+          <input id="location" type="text" name="location" class=". change" value="{{location}}">
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-location"></button>
+      </div>
     </div>
-    <div style="margin-bottom: 0.5em;">
-      <label for="username">URL (Username)<br>
-      /user/</label><span>
-        <input id="username" type="text" name="username" value="{{username}}" class=". change" autocomplete="off" style="width: 10em;"/>
-      </span><label for="username">-{{shortened_id}}</label>
+    {{!--
+    <div class="tr">
+      <div class="td">
+        <div>
+          <label for="birthday">Birthday</label><br>
+          <input id="birthday" type="date" name="birthday" class=". change" value="{{birthday}}">
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-birthday"></button>
+      </div>
     </div>
-    <div style="margin-bottom: 0.5em;">
-      <label for="first_name">First / Last Name</label><br>
-      <span style="width: 7em;">
-        <input id="first_name" type="text" name="first_name" value="{{first_name}}" class=". change" placeholder="First Name" style="width: 7em;">
-      </span>
-      <span>
-        <input id="last_name" type="text" name="last_name" value="{{last_name}}" class=". change" placeholder="Last Name" style="width: 7em;">
-      </span>
+    <div class="tr">
+      <div class="td">
+        <div>
+          <span>Work History<br></span>
+          <span>--Placeholder--</span>
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-workHistory"></button>
+      </div>
     </div>
-    <div style="margin-bottom: 0.5em;">
-      <label for="description">Bio</label><br>
-      <textarea id="description" name="description" class="light background text padding . change" rows="4" cols="80">{{description}}</textarea>
+    <div class="tr">
+      <div class="td">
+        <div>
+          <span>Life Skills<br></span>
+          <span>--Placeholder--</span>
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-externalSkills"></button>
+      </div>
     </div>
-    <div style="margin-bottom: 0.5em;">
-      <label for="location">Location</label><br>
-      <input id="location" type="text" name="location" class=". change" value="{{location}}">
+    <div class="tr">
+      <div class="td">
+        <div>
+          <span>Excelsior Skills<br></span>
+          <span>--Placeholder--</span>
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-excelsiorSkills"></button>
+      </div>
     </div>
-    <div style="margin-bottom: 0.5em;">
-      <label for="birthday">Birthday</label><br>
-      <input id="birthday" type="date" name="birthday" class=". change" value="{{birthday}}">
+    --}}
+    <div class="tr">
+      <div class="td">
+        <div>
+          <span>Join Date<br></span>
+          <span>{{created_at}}</span>
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-joinDate"></button>
+      </div>
+    </div>
+    {{!--
+    <div class="tr">
+      <div class="td">
+        <div>
+          <span>Created Paths</span>
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-createdPaths"></button>
+      </div>
+    </div>
+    --}}
+    <div class="tr">
+      <div class="td">
+        <div>
+          <span>Followed Paths</span>
+        </div>
+      </div>
+      <div class="td">
+        <button type="button" class="booloption" id="show-followedPaths"></button>
+      </div>
     </div>
   </div>
 </div>
-{{/with}}
 {{> pageJS js="user_edit"}}

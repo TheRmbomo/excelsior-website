@@ -1,0 +1,27 @@
+{{#with (lookup . type)}}
+<div class="island round dark background center padding relative . {{../type}}" id={{id}} style="max-width: 40em;">
+  {{! Image and Name}}
+  <div class="absolute" style="top: 1em; left: 1em;">
+    <a href="{{url}}"><button type="button" class="border">Back</button></a>
+  </div>
+  <h2 style="margin: 0.5em 0em;">{{../type}} Settings:<br>{{display_name}}</h2>
+  {{!--
+  <div class="island fullwidth table" style="border-spacing: 0;">
+    <div class="tr">
+      <div class="td" style="width: 2em;">
+        <button type="button" style="background-image: url(/img/arrow_left.png); background-size: 80% 100%; background-repeat: no-repeat; background-position: center;"></button>
+      </div>
+      <div class="td" style="overflow: hidden; white-space: nowrap;">
+        <button type="button" style="border-radius: 5px 5px 0 0;">Display</button>
+        <button type="button" style="border-radius: 5px 5px 0 0;">Private</button>
+        <button type="button" style="border-radius: 5px 5px 0 0;">Manage</button>
+      </div>
+      <div class="td" style="width: 2em;">
+        <button type="button" style="background-image: url(/img/arrow_right.png); background-size: 80% 100%; background-repeat: no-repeat; background-position: center;"></button>
+      </div>
+    </div>
+  </div>
+  --}}
+  {{> (lookup .. 'page')}}
+</div>
+{{/with}}

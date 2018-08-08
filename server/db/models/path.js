@@ -4,6 +4,11 @@ const Schema = mongoose.Schema
 const CommentList = require('./commentList')
 const ReviewList = require('./reviewList')
 
+var trueBool = {
+  type: Boolean,
+  default: true
+}
+
 const Path = new Schema({
   description: {
     type: String,
@@ -22,7 +27,16 @@ const Path = new Schema({
   content: {
     type: Schema.Types.Mixed
   },
-  contentCount: Number
+  contentCount: Number,
+  admins: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  contributors: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  show_description: trueBool
   /*
   content: {
     (ObjectId): {

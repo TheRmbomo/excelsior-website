@@ -177,6 +177,34 @@ html, body {
   word-wrap: break-word;
 }
 
+.table.list .tr:not(:last-child) > .td > div {
+  margin-bottom: 0.5em;
+}
+
+.booloption:not(.b-no):not(.b-yes) {
+  background: url(/img/yesno-no.png) center/contain no-repeat;
+  height: 1.5em;
+  width: 100%;
+}
+.b-no {
+  background: url(/img/yesno-no.png) center/contain no-repeat;
+  height: 1.5em;
+  width: 100%;
+}
+  .b-no:focus {
+    outline: none;
+    background: url(/img/yesno-no-focus.png) center/contain no-repeat;
+  }
+.b-yes {
+  background: url(/img/yesno-yes.png) center/contain no-repeat;
+  height: 1.5em;
+  width: 100%;
+}
+  .b-yes:focus {
+    outline: none;
+    background: url(/img/yesno-yes-focus.png) center/contain no-repeat;
+  }
+
 hr {
   border: unset;
   background-color: #AAAABB;
@@ -233,10 +261,6 @@ input:read-only {
 
 input[type="submit"] {
   font-weight: 700;
-}
-
-input:focus {
-  outline: none;
 }
 
 form {

@@ -4,10 +4,14 @@ const Schema = mongoose.Schema
 const CommentList = require('./commentList')
 const ResourceHistory = require('./resourceHistory')
 
+var trueBool = {
+  type: Boolean,
+  default: true
+}
+
 const User = new Schema({
-  description: {
-    type: String
-  },
+  sql_id: Buffer,
+  description: String,
   work_history: [{
     company: {
       type: Schema.Types.ObjectId,
@@ -31,7 +35,17 @@ const User = new Schema({
   resourceHistory: {
     type: Schema.Types.ObjectId,
     ref: 'ResourceHistory'
-  }
+  },
+  show_name: trueBool,
+  show_joinDate: trueBool,
+  show_followedPaths: trueBool,
+  show_description: trueBool,
+  show_excelsiorSkills: trueBool,
+  show_location: Boolean,
+  show_workHistory: Boolean,
+  show_externalSkills: Boolean,
+  show_birthday: Boolean,
+  show_managedPaths: Boolean
 })
 
 User.pre('save', function () {

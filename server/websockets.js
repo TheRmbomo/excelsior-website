@@ -24,7 +24,7 @@ var update = (send, req, opt) => new Promise((resolve, reject) => {
   key = (() => {
     if (valid.isIn(req.key, opt.sql_keys)) {
       return req.key
-    } else if (valid.isIn(req.key, opt.mongo_keys)) {
+    } else if (valid.isIn(req.key, opt.mongo_keys) || valid.matches(req.key, opt.mongo_regex)) {
       sql = false
       return req.key
     } else opt.error[req.key] = {type: 'Invalid property'}
@@ -41,51 +41,102 @@ var update = (send, req, opt) => new Promise((resolve, reject) => {
         opt.message = {redirect: `/${opt.table}/${value}-${res.shortened_id.toString('hex')}/edit`}
       }
     })
-  } else return opt.mongo_query(value)
+  } else {
+    return opt.mongo_query(value)
+    .then(res => {
+      if (res && res.message !== undefined) opt.message = res.message
+    })
+  }
 })
 .then(() => send(opt.message))
 .catch(error => {
+  console.log(error);
   if (typeof error !== 'string') send({error})
   return error
 })
 
 ws.on('ready', (socket, httpReq) => {
-  let user = socket.user
+  var user = socket.user
+
+  socket.on('check_property', (req, send) => {
+    if (!req) return send({error: 'Invalid request'})
+    if (!user) return send({error: 'Invalid authentication'})
+
+    var id = user.id, model = User, type = 'users'
+
+    if (req.type && req.type === 'path') {
+      if (!req.id) return send({error: 'Invalid request'})
+      id = req.id
+      model = Path
+      type = 'paths'
+    }
+
+    pgQuery(`SELECT mongo_id FROM ${type} WHERE id=$1`, [id])
+    .then(q => q.rows[0])
+    .then(row => {
+      if (!row) return send({error: 'Invalid request'})
+      return model.findById(row.mongo_id)
+    })
+    .then(doc => {
+      if (!doc) return send({error: 'Invalid request'})
+      send(Object.keys(doc.toObject()).map(key => {
+        if (valid.isIn(key, req.keys)) {
+          return {key, value: doc[key]}
+        }
+      }).filter(i => i !== undefined))
+    })
+    .catch(e => console.log(e))
+  })
 
   socket.on('edit_user', (req, send) => {
-    if (!req || !req.id) return send({error: 'No user ID'})
-    if (!user || user.id !== req.id) return send({error: 'Invalid authentication'})
+    if (!req) return send({error: 'Invalid request'})
+    if (!user) return send({error: 'Invalid authentication'})
+    req.id = user.id
 
     update(send, req, {
       table: 'user',
       sql_keys: ['is_public', 'display_name', 'first_name', 'last_name', 'username', 'birthday',
       'language'],
       mongo_keys: ['description', 'location'],
-      mongo_query: value => pgQuery(`SELECT mongo_id FROM users WHERE id=$1`, [req.id])
+      mongo_regex: /show_.*/,
+      mongo_query: value => pgQuery(`SELECT mongo_id FROM users WHERE id=$1`, [user.id])
       .then(q => q.rows[0])
-      .then(user => User.findByIdAndUpdate(user.mongo_id, {[req.key]: value}))
+      .then(user => User.findById(user.mongo_id))
+      .then(doc => {
+        if (value === 'toggle') value = !doc[req.key]
+        return doc.update({[req.key]: value}).then(() => value)
+      })
+      .then(value => {return {message: value}})
     })
   })
 
   socket.on('edit_path', (req, send) => {
-    if (!req.id) return send({error: 'No path ID'})
+    if (!req) return send({error: 'Invalid request'})
     if (!user) return send({error: 'Invalid authentication'})
+    if (!req.id) return send({error: 'No path ID'})
 
     update(send, req, {
       table: 'path',
       sql_keys: ['is_public', 'display_name', 'name'],
       mongo_keys: ['description'],
+      mongo_regex: /show_.*/,
       initial_query: pgQuery(`SELECT created_by, mongo_id FROM paths WHERE id=$1`, [req.id])
       .then(q => q.rows[0])
       .then(path => {
-        if (path.created_by !== user.id) throw 'Invalid authentication'
+        if (!path) throw Error('Path Missing')
         req.mongo_id = path.mongo_id
       }),
-      mongo_query: value => Path.findByIdAndUpdate(req.mongo_id, {[req.key]: value})
+      mongo_query: value => Path.findById(req.mongo_id)
+      .then(doc => {
+        if (value === 'toggle') value = !doc[req.key]
+        return doc.update({[req.key]: value}).then(() => value)
+      })
+      .then(value => {return {message: value}})
     })
   })
 
   socket.on('is_following', (req, send) => {
+    if (!req) return send({error: 'Invalid request'})
     if (!user) return send({error: 'Not logged in'})
     if (!req.id) return send({error: 'No path ID'})
 
@@ -95,6 +146,7 @@ ws.on('ready', (socket, httpReq) => {
   })
 
   socket.on('follow_path', (req, send) => {
+    if (!req) return send({error: 'Invalid request'})
     if (!user) return send({error: 'Not logged in'})
     if (!req.id) return send({error: 'No path ID'})
 

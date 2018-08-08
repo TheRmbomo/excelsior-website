@@ -29,7 +29,7 @@ sanitize = (key, value) => {
   if (valid.isIn(key, ['name', 'username'])) key = 'internal_name'
   // --
 
-  if (valid.isIn(key, ['internal_name'])) value = value.toLowerCase()
+  if (valid.isIn(key, ['internal_name', 'tags'])) value = value.toLowerCase()
   // Replace all whitespace with underscores
   if (valid.isIn(key, ['internal_name'])) value = value.replace(/\s+/g, '_')
   // Remove all non-word characters
@@ -38,27 +38,29 @@ sanitize = (key, value) => {
   if (valid.isIn(key, ['text'])) value = value.replace(/[\d_]+/g, '')
   // Collapse multiple underscores
   if (valid.isIn(key, ['internal_name', 'display_name'])) value = value.replace(/_{2,}/g, '_')
-  // Remove leading numbers, non-word characters, and underscores
+  // Remove leading non-word characters, and underscores
   // Remove trailing underscores
-  if (valid.isIn(key, ['internal_name', 'display_name'])) value = value.replace(/(^[\d\W_]+|[_]+$)/g, '')
-  if (valid.isIn(key, ['internal_name', 'display_name', 'text'])) value = value.trim()
+  if (valid.isIn(key, ['internal_name', 'display_name'])) value = value.replace(/(^[\W_]+|[_]+$)/g, '')
+  if (valid.isIn(key, ['internal_name', 'display_name', 'text', 'tags'])) value = value.trim()
 
   if (valid.isIn(key, ['internal_name'])) {
-    if (!value) throw {type: 'required'}
+    if (!value) throw {[key]: {type: 'required'}}
     if (!valid.isLength(value, {min: 6, max: 50})) {
-      throw {type: 'length', min: 6, max: 50}
+      throw {[key]: {type: 'length', min: 6, max: 50}}
     }
   }
   if (valid.isIn(key, ['text'])) {
     if (!valid.isLength(value, {max: 50})) {
-      throw {type: 'length', max: 50}
+      throw {[key]: {type: 'length', max: 50}}
     }
   }
   if (valid.isIn(key, ['description'])) {
     if (!valid.isLength(value, {max: 1000})) {
-      throw {type: 'length', max: 1000}
+      throw {[key]: {type: 'length', max: 1000}}
     }
   }
+
+  if (valid.isIn(key, ['tags'])) value = value.split(/\W+/)
 
   return value
 }

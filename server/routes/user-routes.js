@@ -14,7 +14,7 @@ const {pgQuery} = require('./../db/pg')
 const {shortenId, createUser} = require('./../middleware/passport')
 const {sanitize} = require('./../middleware/utilities')
 const User = require('./../db/models/user')
-const {pathGroup, listPaths} = require('./web-routes')
+const {listResults, pathGroup, resourceGroup} = require('./web-routes')
 
 var defaultAvatar = '/img/default_avatar.png'
 
@@ -51,13 +51,16 @@ app.route('/create-user')
     if (!newUser.password) error.password = {type: 'required'}
     else if (!valid.isLength(newUser.password + '', {min: 6})) error.password = {type: 'length', min: 6}
     else if (newUser.password !== newUser.confirm_password) error.confirm_password = {type: 'not_matching'}
-    if (is_error()) throw error
 
-    newUser.display_name = sanitize('display_name', newUser.display_name)
-    newUser.username = sanitize('username', newUser.display_name)
-    let names = newUser.full_name.trim().split(' ').filter(i => !!i)
-    newUser.first_name = sanitize('text', names[0])
-    newUser.last_name = sanitize('text', names[1])
+    try {
+      newUser.display_name = sanitize('display_name', newUser.display_name)
+      newUser.username = sanitize('username', newUser.display_name)
+
+      let names = newUser.full_name.trim().split(' ').filter(i => !!i)
+      newUser.first_name = sanitize('text', names[0])
+      newUser.last_name = sanitize('text', names[1])
+    } catch (e) {return res.status(400).send(e)}
+    if (is_error()) throw error
 
     return scrypt.params(0.5)
   })
@@ -76,7 +79,7 @@ app.route('/create-user')
   }))
   .catch(e => {
     console.log(e)
-    res.redirect('/signup')
+    res.redirect('back')
   })
 })
 
@@ -135,11 +138,7 @@ app.use('/user/:id', (req, res, next) => {
   }
   new Promise((resolve, reject) => {
     if (id.length === 1) return reject()
-    if (id[0] === 'user') resolve(load_user({
-      condition: 'WHERE shortened_id=$1 AND username IS NULL',
-      params: [new Buffer(id[1], 'hex')]
-    }))
-    else resolve(load_user({
+    return resolve(load_user({
       condition: 'WHERE username=$1 AND shortened_id=$2',
       params: [id[0], new Buffer(id[1], 'hex')]
     }))
@@ -155,16 +154,14 @@ app.use('/user/:id', (req, res, next) => {
       own: req.user && req.user.id === user.id
     })
 
-    Object.assign(res.locals, {
-      user
-    })
+    res.locals.user = user
     next()
   })
   .catch(e => next('nf'))
 }, userRouter)
 
 userRouter.get('/', (req, res, next) => {
-  let user = res.locals.user
+  var user = res.locals.user
 
   res.render('user', {
     title: (user.display_name) ? user.display_name : 'User Profile'
@@ -172,48 +169,54 @@ userRouter.get('/', (req, res, next) => {
 })
 
 userRouter.get('/edit', (req, res, next) => {
-  let user = res.locals.user
   if (!req.user) return res.redirect('/login')
-
+  var user = res.locals.user
   if (user.id !== req.user.id) return res.redirect(`/user/${user.url}`)
 
-  res.render('user_edit', {
+  user.is_public ? (user.is_public = 'checked') : (user.is_private = 'checked', user.is_public = '')
+
+  res.render('settings', {
+    type: 'user',
+    page: 'user_edit',
     title: 'Editing Profile'
   })
 })
 
 userRouter.get('/paths', (req, res, next) => {
-  let user = res.locals.user
+  var user = res.locals.user
   if (!user) return next('nf')
 
   // TODO: If user has made this page private, return next()
 
-  var listings = [],
-  perspective = (req.user && req.user.id === user.id) ? 'You' : 'They'
+  var perspective = (req.user && req.user.id === user.id) ? 'You' : 'They',
+  own = req.user.id === user.id
 
   Promise.all([
-    pathGroup(req, listings, listPaths, {
+    pathGroup(req, listResults, {
       group_name: (req.user && req.user.id === user.id) ?
       'Your Paths' : `${user.display_name}'s Paths`,
       condition: 'WHERE created_by=$1',
       params: [user.id],
-      empty_message: `${perspective} haven\'t created any paths yet.`
+      empty_message: `${perspective} haven\'t created any paths yet.`,
+      visible: own || user.show_createdPaths
     }).catch(e => e),
-    pathGroup(req, listings, listPaths, {
+    pathGroup(req, listResults, {
       group_name: 'Managed Paths',
       condition: 'WHERE id = ANY((SELECT path_keys FROM users WHERE id=$1)::uuid[])',
       params: [user.id],
-      empty_message: `${perspective} aren\'t managing anyone\'s paths yet.`
+      empty_message: `${perspective} aren\'t managing anyone\'s paths yet.`,
+      visible: own || user.show_managedPaths
     }).catch(e => e),
-    pathGroup(req, listings, listPaths, {
+    pathGroup(req, listResults, {
       group_name: 'Currently Following',
       condition: 'WHERE id = ANY((SELECT paths_following FROM users WHERE id=$1)::uuid[])',
       params: [user.id],
-      empty_message: `${perspective} aren\'t following anyone\'s paths yet.`
+      empty_message: `${perspective} aren\'t following anyone\'s paths yet.`,
+      visible: own || user.show_followedPaths
     }).catch(e => e)
   ])
-  .then(() => {
-    listings = listings.reduce((text, group) => {
+  .then(listings => {
+    listings = listings.filter(i => !!i).reduce((text, group) => {
       return new hbs.SafeString(text + hbs.compile('{{> path_group}}')(group))
     }, '')
     return res.render('list_paths', {
@@ -228,15 +231,16 @@ userRouter.get('/paths', (req, res, next) => {
   })
 })
 
+/*
 app.get('/my-files', (req, res, next) => {
   if (!req.user) return res.redirect('/login')
 
-  let full = false, files
+  var full = false, files
   pgQuery(`SELECT id AS image_id, name, path, size, type, created_at,
   times_accessed, last_accessed FROM files WHERE owner=$1;`, [req.user.id])
   .then(q => q.rows)
   .then(files => {
-    let taken_space = files.reduce((acc,cur) => acc + cur.size, 0)
+    var taken_space = files.reduce((acc,cur) => acc + cur.size, 0)
     if (taken_space >= 1024 * 1024 * 5) full = true
 
     files.map(file => Object.keys(file).map(key => {
@@ -278,7 +282,7 @@ app.post('/upload-file', (req, res, next) => {
   times_accessed, last_accessed FROM files WHERE owner=$1;`, [req.user.id])
   .then(q => q.rows)
   .then(rows => {
-    let taken_space = rows.reduce((acc,cur) => acc + cur.size, 0)
+    var taken_space = rows.reduce((acc,cur) => acc + cur.size, 0)
     if (taken_space >= 1024 * 1024 * 5) return null
 
     return require('./../middleware/formidable')(req,res)
@@ -289,7 +293,7 @@ app.post('/upload-file', (req, res, next) => {
     if (upload.files[0].size + taken_space >= 1024 * 1024 * 5) {
       return fs.unlink(path.join(app.locals.absoluteDir, 'public/', 'files/', upload.filename), err => err)
     }
-    let file = upload.files[0], filePath = '/'
+    var file = upload.files[0], filePath = '/'
 
     if (file.type.substr(0,5) === 'image') {
       fs.rename(path.join(app.locals.public, 'files/', upload.filename), path.join(app.locals.public, 'img/', upload.filename), err => err)
@@ -298,6 +302,7 @@ app.post('/upload-file', (req, res, next) => {
 
     pgQuery(`INSERT INTO files (name, owner, path, size, type)
     values ($1, $2, $3, $4, $5);`, [file.name,req.user.id,`${filePath}${upload.filename}`,file.size,file.type])
+    return
   })
   .then(() => res.redirect('back'))
   .catch(e => {
@@ -308,7 +313,7 @@ app.post('/upload-file', (req, res, next) => {
 
 app.post('/delete-file', express.json(), express.urlencoded({extended: true}), (req, res, next) => {
   if (!req.user) return res.redirect('/login')
-  let {image_id, file_name} = req.body
+  var {image_id, file_name} = req.body
 
   if (req.body['change-avatar']) {
     return pgQuery('UPDATE users SET avatar_path=$2 WHERE id=$1', [req.user.id, file_name])
@@ -335,3 +340,4 @@ app.post('/delete-file', express.json(), express.urlencoded({extended: true}), (
     next('nf')
   })
 })
+*/
