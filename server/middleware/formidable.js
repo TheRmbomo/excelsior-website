@@ -3,69 +3,76 @@ const fs = require('fs')
 const formidable = require('formidable')
 const uuid = require('uuid/v4')
 
-module.exports = async (req, res) => {
-  var outputPath = path.join(__dirname, '../../public/files/'),
-      form = new formidable.IncomingForm(),
-      sent = true, filename, fields, size, i = 100
-  form.maxFileSize = 5 * 1024 * 1024
-  form.uploadDir = outputPath
+module.exports = (req, opt) => {
+  opt = Object.assign({
+    outputPath: path.join(__dirname, '../../public/'),
+    min: 300,
+    max: 5 * 1024 * 1024,
+    multiple: true
+  }, opt)
 
-  while (filename = uuid(), q = await new Promise(resolve =>
-  fs.open(outputPath + filename, 'r', err => resolve(err))), i--, !q && i>0);
-  if (i === 0) filename = 'file'
+  var form = new formidable.IncomingForm(), receivedFiles = false, newPaths = []
+  Object.assign(form, {
+    maxFileSize: opt.max,
+    multiple: opt.multiple,
+    uploadDir: ''
+  })
 
-  // Since formidable doesn't catch non-existent directories, I have to do so
-  // explicitly.
-  try {
-    let q = await new Promise(resolve => {
-      fs.readdir(outputPath, err => resolve(err))
+  check_filenames = (genId, i=10) => {
+    var id = genId()
+    return new Promise((resolve, reject) => {
+      fs.open(opt.outputPath + id, 'r', (err, fd) => err ? resolve(err) : reject(fd))
     })
-    if (q) throw 'error'
-  } catch (e) {
-    return Promise.resolve({error: 'undefined_directory'})
+    .then(err => id)
+    .catch(fd => {
+      fs.close(fd, err => err)
+      return i ? check_filenames(genId, --i) : {error: 'Unable to generate name'}
+    })
   }
-  form.parse(req, (err, resFields, resFiles) => {
-    files = Object.keys(resFiles).map(key => resFiles[key])
-    files.map(file =>
-      Object.keys(file).map(key => {
-        switch (key) {
-          case 'size': case 'path': case 'name': case 'type': break
-          default: delete file[key]
-        }
-      })
-    )
-    fields = resFields
+
+  form.on('progress', (bytesReceived, bytesExpected) => {
+    if (bytesExpected < opt.min) {
+      req.pause()
+      throw 'File too small'
+    }
+    else if (bytesExpected > opt.max) {
+      req.pause()
+      throw 'File too large'
+    }
   })
 
   form.onPart = part => {
-    // Has to be empty string, non-file fields.filename are undefined
-    if (part.filename === '') {
-      return sent = false
-    }
+    part.addListener('data', data => data);
     form.handlePart(part)
   }
 
-  form.on('fileBegin', (name, file) => file.path = outputPath + filename)
-
-  sent = await Promise.race([
-    new Promise(resolve => {
-      form.on('error', err => {
-        // console.log('error');
-        fs.stat(outputPath + filename, (err, stats) => {
-          if (err) return
-          fs.unlink(outputPath + filename, err => err)
-        })
-        resolve(false)
+  form.on('file', (name, file) => {
+    receivedFiles = true
+    if (opt.rename_fn) {
+      newPaths.push(check_filenames(opt.rename_fn)
+      .then(id => {
+        if (id.error) throw id.error
+        var newPath = path.join(opt.outputPath, id + '.png')
+        fs.rename(file.path, newPath, err => {if (err) throw err})
+        return {name, path: newPath}
       })
-    }),
-    new Promise(resolve => {
-      form.on('aborted', () => {
-        console.log('ab');
-        resolve(false)
-      })
-    }),
-    new Promise(resolve => form.on('end', () => resolve(sent)))
-  ])
+      .catch(e => fs.unlink(file.path, err => err)))
+    }
+  });
 
-  return (sent) ? Promise.resolve({filename, files}) : Promise.resolve({error: 'cancelled'})
+  return new Promise((resolve, reject) => {
+    form.parse(req, (err, fields, files) => {
+      if (err) return reject(err)
+      if (receivedFiles) {
+        if (opt.rename_fn) {
+          return Promise.all(newPaths)
+          .then(results => {
+            results.map(result => files[result.name].path = result.path)
+            return resolve({files, fields})
+          })
+          .catch(e => e)
+        } else return resolve({files, fields})
+      } else return resolve({fields})
+    })
+  })
 }
