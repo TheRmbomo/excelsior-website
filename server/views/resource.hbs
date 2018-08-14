@@ -1,7 +1,7 @@
 {{#with resource}}
 <div class="island round dark background center padding relative . resource" style="max-width: 40em; margin-bottom: 1em;" id={{id}}>
   {{#if image_path}}<img src="{{image_path}}" style="width: 15em; height: 12em;">{{/if}}
-  <h1 class="padding">{{display_name}}</h1>
+  <h2 class="padding">{{display_name}}</h2>
   {{#if owned}}
   <div class="absolute" style="top: 1em; right: 1em;">
     <a href="{{url}}/edit"><button type="button" class="border">Edit</button></a>
@@ -20,6 +20,13 @@
   <div class="round background padding">{{description}}</div>
 </div>
 {{/if}}
+
+{{#if source}}
+<div class="round island center padding" style="max-width: 50em; background: #FFFFFF;">
+  <iframe src="{{source}}" style="width: 100%; max-width: 50em; height: 30em;"></iframe>
+</div>
+{{/if}}
+
 <div class="island round dark background padding" style="max-width: 40em;">
   <h2 class="center padding">Comments</h2>
   <div class="island round background padding"></div>

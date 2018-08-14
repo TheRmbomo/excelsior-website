@@ -14,7 +14,7 @@ const {pgQuery} = require('./../db/pg')
 const {shortenId, createUser} = require('./../middleware/passport')
 const {sanitize} = require('./../middleware/utilities')
 const User = require('./../db/models/user')
-const {listResults, pathGroup, resourceGroup} = require('./web-routes')
+const {listResults, pathGroup, resourceGroup, objectPage} = require('./web-routes')
 
 var defaultAvatar = '/img/default_avatar.png'
 
@@ -27,7 +27,9 @@ app.get('/logout', (req, res) => {
 
 app.route('/create-user')
 .get((req, res) => res.redirect('back'))
-.post(express.json(), express.urlencoded({extended: true}), (req, res, next) => {
+.post(express.json(),
+express.urlencoded({extended: true}),
+(req, res, next) => {
   req.logout()
   var newUser = req.body, error = {}, is_error = () => Object.keys(error).length
 
@@ -49,7 +51,7 @@ app.route('/create-user')
   })
   .then(() => {
     if (!newUser.password) error.password = {type: 'required'}
-    else if (!valid.isLength(newUser.password + '', {min: 6})) error.password = {type: 'length', min: 6}
+    else if (!valid.isLength(newUser.password + '', {min: 6, max: 512})) error.password = {type: 'length', min: 6, max: 512}
     else if (newUser.password !== newUser.confirm_password) error.confirm_password = {type: 'not_matching'}
 
     try {
@@ -59,9 +61,8 @@ app.route('/create-user')
       let names = newUser.full_name.trim().split(' ').filter(i => !!i)
       newUser.first_name = sanitize('text', names[0])
       newUser.last_name = sanitize('text', names[1])
-    } catch (e) {return res.status(400).send(e)}
+    } catch (e) {throw e}
     if (is_error()) throw error
-
     return scrypt.params(0.5)
   })
   .then(params => scrypt.kdf(newUser.password, params))
@@ -74,7 +75,6 @@ app.route('/create-user')
   }))
   .then(user => req.login(user, err => {
     if (err) return next('nf')
-    console.log(user);
     res.redirect(`/user/${user.username}-${user.shortened_id.toString('hex')}`)
   }))
   .catch(e => {
@@ -111,54 +111,29 @@ app.get('/users', (req, res, next) => {
 })
 
 var userRouter = express.Router()
-app.use('/user/:id', (req, res, next) => {
-  var {id} = req.params
-  id = id.split('-')
-  id.splice(2)
-  if (!id[0]) return next('nf')
-
-  var load_user = opt => {
-    opt = Object.assign({
-      properties: `id, shortened_id, username, mongo_id, first_name, last_name,
-      display_name, avatar_path, TO_CHAR(birthday, 'yyyy-mm-dd') AS birthday, friends, currency, created_at`,
-      params: []
-    }, opt)
-    return pgQuery(`SELECT ${opt.properties} FROM users ${opt.condition}`, opt.params)
-    .then(q => {
-      if (!q.rows.length) return null
-      return q.rows[0]
-    })
-    .then(user => {
-      if (!user) return null
-      user.shortened_id = user.shortened_id.toString('hex')
-      return User.findById(user.mongo_id)
-      .then(doc_user => Object.assign(user, doc_user.toObject()))
-    })
-    .catch(e => console.log(e))
-  }
-  new Promise((resolve, reject) => {
-    if (id.length === 1) return reject()
-    return resolve(load_user({
-      condition: 'WHERE username=$1 AND shortened_id=$2',
-      params: [id[0], new Buffer(id[1], 'hex')]
-    }))
+app.use('/user/:id', (req, res, next) => objectPage({
+  type: 'user',
+  properties: `id, shortened_id, username, first_name, last_name,
+  display_name, avatar_path, TO_CHAR(birthday, 'yyyy-mm-dd') AS birthday, friends, currency, created_at`,
+  condition: 'WHERE username=$1 AND shortened_id=$2',
+  model: User
+})(req, res, next)
+.then(user => {
+  Object.assign(user, {
+    name: user.first_name + ((user.first_name && user.last_name) ? ' ' + user.last_name : user.last_name),
+    url: `/user/${user.username}-${user.shortened_id}`,
+    created_at: req.format_date(user.created_at),
+    avatar_path: user.avatar_path || defaultAvatar,
+    own: (req.user && req.user.id === user.id)
   })
-  .then(user => {
-    if (!user) return next('nf')
 
-    Object.assign(user, {
-      name: user.first_name + ((user.first_name && user.last_name) ? ' ' + user.last_name : user.last_name),
-      url: `/user/${id[0]}-${user.shortened_id}`,
-      created_at: req.format_date(user.created_at),
-      avatar_path: user.avatar_path || defaultAvatar,
-      own: req.user && req.user.id === user.id
-    })
-
-    res.locals.user = user
-    next()
-  })
-  .catch(e => next('nf'))
-}, userRouter)
+  res.locals.user = user
+  next()
+})
+.catch(e => {
+  console.log(e);
+  next('nf')
+}), userRouter)
 
 userRouter.get('/', (req, res, next) => {
   var user = res.locals.user
@@ -169,13 +144,15 @@ userRouter.get('/', (req, res, next) => {
 })
 
 userRouter.get('/edit', (req, res, next) => {
-  if (!req.user) return res.redirect('/login')
+  if (!req.user) return next('auth')
+
   var user = res.locals.user
   if (user.id !== req.user.id) return res.redirect(`/user/${user.url}`)
 
   user.is_public ? (user.is_public = 'checked') : (user.is_private = 'checked', user.is_public = '')
 
   res.render('settings', {
+    header: 'User',
     type: 'user',
     page: 'user_edit',
     title: 'Editing Profile'
@@ -199,13 +176,6 @@ userRouter.get('/paths', (req, res, next) => {
       params: [user.id],
       empty_message: `${perspective} haven\'t created any paths yet.`,
       visible: own || user.show_createdPaths
-    }).catch(e => e),
-    pathGroup(req, listResults, {
-      group_name: 'Managed Paths',
-      condition: 'WHERE id = ANY((SELECT path_keys FROM users WHERE id=$1)::uuid[])',
-      params: [user.id],
-      empty_message: `${perspective} aren\'t managing anyone\'s paths yet.`,
-      visible: own || user.show_managedPaths
     }).catch(e => e),
     pathGroup(req, listResults, {
       group_name: 'Currently Following',
@@ -277,9 +247,10 @@ app.get('/my-files', (req, res, next) => {
     return next('nf')
   })
 })
+*/
 
 app.post('/upload-file', (req, res, next) => {
-  if (!req.user) return res.redirect('/login')
+  if (!req.user) return next('auth')
 
   pgQuery(`SELECT id AS image_id, name, path, size, type, created_at,
   times_accessed, last_accessed FROM files WHERE owner=$1;`, [req.user.id])
@@ -315,7 +286,7 @@ app.post('/upload-file', (req, res, next) => {
 })
 
 app.post('/delete-file', express.json(), express.urlencoded({extended: true}), (req, res, next) => {
-  if (!req.user) return res.redirect('/login')
+  if (!req.user) return next('auth')
   var {image_id, file_name} = req.body
 
   if (req.body['change-avatar']) {
@@ -343,4 +314,3 @@ app.post('/delete-file', express.json(), express.urlencoded({extended: true}), (
     next('nf')
   })
 })
-*/

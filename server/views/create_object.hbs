@@ -12,7 +12,9 @@
       <div class="tr">
         <div class="td">
           <div>
-            <label for="display_name">Name:</label>
+            <label for="display_name">Name:
+              <span style="color: #BB0000;">*</span>
+            </label>
             <input id="display_name" type="text" name="display_name">
           </div>
         </div>
@@ -25,6 +27,21 @@
           </div>
         </div>
       </div>
+      {{#if resource_types}}
+      <div class="tr">
+        <div class="td">
+          <label for="type">Type:</label>
+          <div>
+            <select id="type" name="type">
+              <option value="select">Choose an option</option>
+              {{#each resource_types}}
+              <option value="{{value}}">{{text}}</option>
+              {{/each}}
+            </select>
+          </div>
+        </div>
+      </div>
+      {{/if}}
       <div class="tr">
         <div class="td">
           <div>
@@ -36,12 +53,23 @@
       <div class="tr">
         <div class="td">
           <div>
-            <label for="tags">Tags:</label>
+            <label for="tags">Tags <em style="font-size: 0.8em;">(Comma-separated)</em>:</label>
             <textarea id="tags" class="fullwidth padding text" name="tags"></textarea>
           </div>
         </div>
       </div>
+      {{#if resource_types}}
+      <div class="tr">
+        <div class="td">
+          <div>
+            <label for="type">Source (URL):</label>
+            <input type="text" name="source">
+          </div>
+        </div>
+      </div>
+      {{/if}}
     </div>
-    <input type="submit" value="{{create}}" style="max-width: 20em;">
+    <input id="submit" type="submit" value="{{create}}" style="max-width: 20em;" disabled>
   </form>
 </div>
+{{> pageJS js="create_object"}}

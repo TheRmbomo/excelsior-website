@@ -37,6 +37,8 @@ require('./db/pg')
 require('./websockets')
 // Routes
 require('./routes/web-routes')
+require('./routes/path-routes')
+require('./routes/resource-routes')
 require('./routes/user-routes')
 // require('./routes/search-routes');
 // require('./routes/chatbot-routes');
@@ -49,7 +51,8 @@ app.get('/not-found', (req, res) => {
   })
 })
 .use((err, req, res, next) => {
-  if (err === 'nf') return res.redirect('/not-found')
+  if (err === 'nf') return res.status(400).redirect('/not-found')
+  if (err === 'auth') return res.status(401).redirect('/login')
   next(err)
 })
 .all('*', (req, res) => {
