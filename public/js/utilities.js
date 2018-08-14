@@ -145,15 +145,20 @@ animateResult = opt => new Promise((resolve, reject) => {
   }
 }, opt.jump))
 .catch(e => console.error(Error(e))),
-error_blurb = (id, error) => {
-  if (!id) throw 'ID required'
+error_blurb = error => {
+  if (!error) return
+  var id = Object.keys(error)[0]
+  error = error[id]
 
   var elem = _id(id)
+  if (!elem) return
   var message = (() => {
-    let part = ''
+    var part = ''
     switch (error.type) {
       case 'required':
       return 'This is required.'
+      case 'invalid':
+      return 'This entry is invalid.'
       case 'length':
       part += 'Must be '
       if (error.min) part += `at least ${error.min} characters long`
@@ -161,14 +166,15 @@ error_blurb = (id, error) => {
       if (error.max) part += `at most ${error.max} characters long`
       part += '.'
       return part
+      case 'matching':
+      return 'Passwords do not match.'
       default:
       return ''
     }
     return part
   })()
 
-  elem.parentNode.style.width = getComputedStyle(elem).width
-  elem.parentNode.classList.add('relative','inblock')
+  elem.parentNode.classList.add('relative')
   var unset = getUnset(elem, 'backgroundColor');
   elem.style.backgroundColor = unset
   var error_box = document.createElement('DIV')
@@ -185,6 +191,7 @@ error_blurb = (id, error) => {
     filter: 'alpha(opacity=0)',
     opacity: 0
   })
+  error_box.style.left = elem.offsetLeft + 'px'
   error_box.appendChild(error)
   elem.parentNode.appendChild(error_box)
   animateResult({

@@ -1,3 +1,5 @@
+var address = 'ws://192.168.1.223:3000'
+
 WebSocket.prototype.emit = function (event, data, callback) {
   if (typeof event !== 'string') return
   else if (typeof data === 'function') {
@@ -39,7 +41,7 @@ WebSocket.prototype.on = function (setEvent, callback) {
   return this
 }
 
-var ws = new WebSocket('ws://192.168.1.223:3002')
+var ws = new WebSocket(address)
 ws.events = {}
 ws.onopen = function onopen() {
   ws.onmessage = eventObj => {
@@ -58,7 +60,7 @@ ws.onopen = function onopen() {
       if (ws.readyState === 1) return clearInterval(interval)
 
       let oldWs_events = ws.events
-      ws = new WebSocket('ws://192.168.1.223:3002')
+      ws = new WebSocket(address)
       ws.events = oldWs_events
       ws.onopen = onopen
     }, 50)

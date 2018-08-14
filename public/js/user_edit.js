@@ -1,5 +1,19 @@
 var user = {id: Array.from(_class('user'))[0].id},
-id = user.id
+id = user.id,
+update_model = req => ws.emit('update_model', req, res => {
+  try {
+    if (res.error) {
+      try {
+        res.error.map(error => error_blurb(error))
+      } catch (e) {
+        return console.error(res.error);
+      }
+    }
+    else req.properties.map(id => _id(id).style.backgroundColor = '')
+  } catch (e) {}
+  if (res.redirect) window.location = res.redirect
+  if (res.display) _id('display').innerHTML = res.display
+})
 
 Array.from(_class('change'), c => {
   c.addEventListener('change', event => {
@@ -8,54 +22,42 @@ Array.from(_class('change'), c => {
 
     var current = event.currentTarget,
     req = {
-      id,
-      key: current.name,
-      value: current.value
+      type: 'user',
+      properties: [current.name],
+      values: [current.value]
     }
-    ws.emit('edit_user', req, res => {
-      if (res.error) return error_blurb(req.key, res.error)
-      else _id(req.key).style.backgroundColor = ''
-      if (res.redirect) window.location = res.redirect
-      console.log(res)
-    })
+
+    update_model(req)
   })
 })
 
 window.addEventListener('load', event => {
-  var keys = Array.from(_class('booloption')).map(i => i.id.replace('show-','show_'))
-  ws.emit('check_property', {keys}, res => {
+  var keys = Array.from(_class('bool')),
+  req = {
+    type: 'user',
+    properties: keys.map(key => key.id)
+  }
+
+  ws.emit('check_model', req, res => {
     if (!res) return
-    res.map(bool => {
-      var key = bool.key.replace('show_','show-')
-      if (bool.value) {
-        _id(key).classList.add('b-yes')
-        _id(key).classList.remove('b-no')
-      } else {
-        _id(key).classList.add('b-no')
-        _id(key).classList.remove('b-yes')
-      }
+    if (res.error) return console.error(res.error);
+    Object.keys(res).map(key => {
+      _id(key).checked = res[key]
     })
   })
 }, {once: true})
 
-Array.from(_class('booloption'), c => {
-  c.addEventListener('click', event => {
+Array.from(_class('bool'), c => {
+  c.addEventListener('change', event => {
     event.preventDefault()
-    let current = event.currentTarget,
+
+    var current = event.currentTarget,
     req = {
-      id,
-      key: current.id.replace('show-','show_'),
-      value: 'toggle'
+      type: 'user',
+      properties: [current.name],
+      values: [current.checked]
     }
-    ws.emit('edit_user', req, res => {
-      if (res.error) return console.error(res.error)
-      if (res) {
-        current.classList.add('b-yes')
-        current.classList.remove('b-no')
-      } else {
-        current.classList.add('b-no')
-        current.classList.remove('b-yes')
-      }
-    })
+
+    update_model(req)
   })
 })
