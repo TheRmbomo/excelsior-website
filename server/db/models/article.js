@@ -3,8 +3,6 @@ const Schema = mongoose.Schema
 
 const Resource = require('./resource')
 
-const Article = new Schema({
-  body_path: String
-})
+const Article = new Schema({})
 
-module.exports = Resource.discriminator('Article', Article, 'Articles')
+module.exports = Resource.discriminator('Article', Article)

@@ -12,4 +12,4 @@ Video.virtual('average_minutes_watched').get(function () {
   return this.minutes_watched / this.times_played
 })
 
-module.exports = Resource.discriminator('Video', Video, 'Videos')
+module.exports = Resource.discriminator('Video', Video)

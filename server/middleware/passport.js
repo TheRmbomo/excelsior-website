@@ -48,7 +48,7 @@ app
 })
 
 var shortenId = id => {
-  let buffer = new Buffer(uuidParse(id)),
+  var buffer = Buffer.from(uuidParse(id)),
   a = buffer.slice(0,8), b = buffer.slice(8,16),
   shortened_id = xor(a,b)
   pgQuery(`UPDATE users SET shortened_id=$1 WHERE id=$2;`, [shortened_id, id])
@@ -77,23 +77,19 @@ createUser = opt => new Promise((resolve, reject) => {
   if (!opt.properties || !opt.values) {
     return reject('Required: properties, values')
   }
-  let doc_user = new User()
-  opt.params.push(doc_user._id.toString())
-  opt.properties.push('mongo_id')
   opt.properties = (opt.properties.length > 1) ? `(${opt.properties.toString()})` : opt.properties.toString()
-  opt.values.push(`$${opt.params.length}`)
   opt.values = (opt.values.length > 1) ? `(${opt.values.toString()})` : opt.values.toString()
   pgQuery(`INSERT INTO users ${opt.properties}
   values ${opt.values} RETURNING ${opt.returning}`, opt.params)
   .then(q => q.rows[0])
   .then(user => {
-    if (user.code) {
-      return reject('Error: Cannot connect to database')
-    }
-    console.log('PLACEHOLDER: Email sent')
+    if (user.code) return reject('Error: Cannot connect to database')
+
     user.shortened_id = shortenId(user.id)
-    doc_user.sql_id = new Buffer(uuidParse(user.id))
+    var doc_user = new User()
+    doc_user._id = user.id
     doc_user.save()
+    console.log('PLACEHOLDER: Email sent')
     return resolve(user)
   })
 })
@@ -234,7 +230,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (userId, done) => {
   pgQuery(`SELECT id, username, display_name, avatar_path, shortened_id,
-  paths_following, mongo_id FROM users WHERE id=$1`, [userId])
+  paths_following FROM users WHERE id=$1`, [userId])
   .then(q => q.rows[0])
   .then(user => {
     if (!user) return done({user: 'invalid'})

@@ -3,6 +3,7 @@ const Schema = mongoose.Schema
 
 const CommentList = require('./commentList')
 const ReviewList = require('./reviewList')
+const PathStatus = require('./pathStatus')
 
 var trueBool = {
   type: Boolean,
@@ -10,6 +11,7 @@ var trueBool = {
 }
 
 const Path = new Schema({
+  _id: String,
   description: {
     type: String,
     trim: true,
@@ -29,11 +31,11 @@ const Path = new Schema({
   },
   contentCount: Number,
   admins: [{
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'User'
   }],
   contributors: [{
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'User'
   }],
   show_description: trueBool
@@ -60,6 +62,15 @@ Path.pre('save', function () {
     commentList.save()
     reviewList.save()
   }
+})
+
+Path.post('remove', function () {
+  CommentList.findById(this.commentList)
+  .then(doc => doc.remove())
+  ReviewList.findById(this.reviewList)
+  .then(doc => doc.remove())
+  PathStatus.find({path: this._id})
+  .then(docs => docs.map(doc => doc.remove()))
 })
 
 module.exports = mongoose.model('Path', Path, 'Paths')

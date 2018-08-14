@@ -3,7 +3,7 @@ const Schema = mongoose.Schema
 
 const UserResponse = new Schema({
   author: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'User',
     required: true
   },

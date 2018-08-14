@@ -1,9 +1,12 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
+const CommentList = require('./commentList')
+const ReviewList = require('./reviewList')
+
 const Company = new Schema({
   members: [{
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'User'
   }],
   description: {
@@ -20,6 +23,24 @@ const Company = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'ReviewList'
   }
+})
+
+Company.pre('save', function () {
+  if (this.isNew) {
+    let commentList = new CommentList()
+    let reviewList = new ReviewList()
+    this.commentList = commentList._id
+    this.reviewList = reviewList._id
+    commentList.save()
+    reviewList.save()
+  }
+})
+
+Company.post('remove', function () {
+  CommentList.findById(this.commentList)
+  .then(doc => doc.remove())
+  ReviewList.findById(this.reviewList)
+  .then(doc => doc.remove())
 })
 
 module.exports = mongoose.model('Company', Company, 'Companies')

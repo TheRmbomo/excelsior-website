@@ -3,6 +3,9 @@ const Schema = mongoose.Schema
 
 const CommentList = require('./commentList')
 const ResourceHistory = require('./resourceHistory')
+const PathStatus = require('./pathStatus')
+const UserActivity = require('./userActivity')
+const UserResponse = require('./userResponse')
 
 var trueBool = {
   type: Boolean,
@@ -10,7 +13,7 @@ var trueBool = {
 }
 
 const User = new Schema({
-  sql_id: Buffer,
+  _id: String,
   description: String,
   work_history: [{
     company: {
@@ -57,6 +60,19 @@ User.pre('save', function () {
     commentList.save()
     resourceHistory.save()
   }
+})
+
+User.post('remove', function () {
+  CommentList.findById(this.commentList)
+  .then(doc => doc.remove())
+  ResourceHistory.findById(this.resourceHistory)
+  .then(doc => doc.remove())
+  PathStatus.find({user: this._id})
+  .then(docs => docs.map(doc => doc.remove()))
+  UserActivity.find({user: this._id})
+  .then(docs => docs.map(doc => doc.remove()))
+  UserResponse.find({author: this._id})
+  .then(docs => docs.map(doc => doc.remove()))
 })
 
 module.exports = mongoose.model('User', User, 'Users')

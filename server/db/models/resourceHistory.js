@@ -5,7 +5,11 @@ const ResourceHistory = new Schema({
   history: Schema.Types.Mixed
   /*
   history: {
-    Resource-id: Date
+    Resource-id: {
+      started_date: Date,
+      status: String,
+      finished_Date: Date
+    }
   }
   */
 })

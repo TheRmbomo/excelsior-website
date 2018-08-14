@@ -3,11 +3,11 @@ const Schema = mongoose.Schema
 
 const PathStatus = new Schema({
   path: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'Path'
   },
   user: {
-    type: Schema.Types.ObjectId,
+    type: String,
     ref: 'User'
   },
   status: String,

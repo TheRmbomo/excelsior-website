@@ -1,18 +1,21 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
+const CommentList = require('./commentList')
+
 var trueBool = {
   type: Boolean,
   default: true
 }
 
 const Resource = new Schema({
+  _id: String,
   description: {
     type: String,
     trim: true,
     default: ''
   },
-  comments: {
+  commentList: {
     type: Schema.Types.ObjectId,
     ref: 'CommentList'
   },
@@ -21,6 +24,7 @@ const Resource = new Schema({
     likes: Number,
     dislikes: Number
   },
+  source_type: trueBool,
   source: String,
   show_description: trueBool
 })
@@ -31,6 +35,11 @@ Resource.pre('save', function () {
     this.commentList = commentList._id
     commentList.save()
   }
+})
+
+Resource.post('remove', function () {
+  CommentList.findById(this.commentList)
+  .then(doc => doc.remove())
 })
 
 module.exports = mongoose.model('Resource', Resource, 'Resources')
