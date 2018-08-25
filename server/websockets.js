@@ -14,7 +14,7 @@ const models = {
   path: Path,
   resource: Resource
 }
-const {sanitize} = require('./middleware/utilities')
+const {sanitize, format_date} = require('./middleware/utilities')
 
 var err = e => console.log(Error(e))
 
@@ -31,8 +31,9 @@ select_sql_properties = {
 },
 mongo_properties = {
   user: ['description', 'location',
-  'show_name', 'show_joinDate', 'show_followedPaths', 'show_description', 'show_excelsiorSkills',
-  'show_location', 'show_workHistory', 'show_externalSkills', 'show_birthday', 'show_managedPaths'],
+  'show_name', 'show_joinDate', 'show_followedPaths', 'show_description',
+  'show_excelsiorSkills', 'show_location', 'show_workHistory', 'show_externalSkills',
+  'show_birthday', 'show_managedPaths'],
   path: ['description',
   'show_description'],
   resource: ['description', 'source', 'source_type',
@@ -41,6 +42,118 @@ mongo_properties = {
 
 ws.on('ready', (socket, httpReq) => {
   var user = socket.user
+
+  socket.on('creator_save', (req, send) => {
+    var {url, save} = req
+    try {
+      if (JSON.stringify(save).length > 2000) {
+        return send({error: 'Path too large.', metric: 'bytes'})
+      }
+    } catch (e) {
+      return res.send({error: 'Invalid input.'})
+    }
+    console.log(save);
+
+    pgQuery(`SELECT id FROM paths WHERE name=$1 AND shortened_id=$2`,
+    [url[0], Buffer.from(url[1], 'hex')])
+    .then(q => q.rows[0])
+    .then(path => Path.findById(path.id))
+    .then(doc => {
+      if (!save[0]) return
+      doc.content = []
+      var stack = [[save[0],0]], i = 100-1
+      while (stack.length && i > 0) {
+        var item = stack.pop(), resource = item[0], index = item[1],
+        next = resource.next
+        if (resource.resource) {
+          console.log(resource);
+          var url = resource.resource.url
+          console.log(url);
+          delete resource.resource
+          resource.url = url
+        }
+        if (resource.test) {
+          // TODO: conditionals
+        }
+        doc.content[index] = resource
+        if (next, save[next]) stack.push([save[next], next])
+        i--
+      }
+      console.log(doc.content);
+      return Path.updateOne({_id: doc._id}, {$set: {content: doc.content}})
+    })
+  })
+
+  socket.on('creator_loadMenu', (req, send) => {
+    pgQuery(`SELECT id, shortened_id, name, display_name, rating,
+    created_by, created_at, image_path FROM resources`)
+    .then(q => q.rows)
+    .then(rows => Promise.all(rows.map(row => Resource.findById(row.id)
+    .then(doc => {
+      var doc = doc.toObject(), {description} = doc,
+      new_doc = {description}
+      row.url = `/resource/${row.name}-${row.shortened_id.toString('hex')}`
+      row.created_at = format_date(row.created_at)
+      delete row.name; delete row.shortened_id;
+      return pgQuery(`SELECT display_name, username, shortened_id
+      FROM users WHERE id=$1`, [row.created_by])
+      .then(q => q.rows[0])
+      .then(user => {
+        delete row.created_by
+        if (!user) return
+        row.author = user.display_name
+        row.author_url = `/user/${user.username}-${user.shortened_id.toString('hex')}`
+        return new_doc
+      })
+    })
+    .then(doc => Object.assign(row, doc)))))
+    .then(send)
+    .catch(e => console.log(e))
+  })
+
+  socket.on('creator_init', (req, send) => {
+    var {url} = req
+    pgQuery(`SELECT id FROM paths WHERE name=$1 AND shortened_id=$2`,
+    [url[0], Buffer.from(url[1], 'hex')])
+    .then(q => q.rows[0])
+    .then(path => Path.findById(path.id))
+    .then(doc => {
+      if (!doc.content) return {status: 'new'}
+      var res = {status: 'loaded', content: doc.content},
+      stack = [[doc.content[0],0]], i = 100-1, promises = []
+      while (stack.length && i > 0) {
+        var resource = stack.pop(), {url, next} = resource[0]
+        if (url) {
+          var url = url.split('/')[2].split('-'),
+          name = url[0], short_id = Buffer.from(url[1],'hex')
+          console.log(url);
+          var promise = new Promise(resolve => {
+            var index = resource[1], urlpath = `/resource/${name}-${url[1]}`
+            pgQuery(`SELECT id, display_name, shortened_id rating, created_by, created_at,
+            image_path FROM resources WHERE name=$1 AND shortened_id=$2`, [name, short_id])
+            .then(q => q.rows[0])
+            .then(row => Resource.findById(row.id).then(doc => {
+              delete row.id
+              var doc = doc.toObject(), {description} = doc
+              row.url = urlpath
+              return resolve([Object.assign(row, {description}), index])
+            }))
+          })
+          promises.push(promise)
+        }
+        if (typeof next === 'number' && doc.content[next]) {
+          stack.push([doc.content[next], next])
+        }
+        i--
+      }
+      return Promise.all(promises).then(data => {
+        data.map(data => res.content[data[1]].resource = data[0])
+        return res
+      })
+    })
+    .then(res => send(res))
+    .catch(e => console.log(e))
+  })
 
   socket.on('update_article', (req, send) => {
     if (!req) return send({error: 'Invalid request'})
@@ -208,8 +321,9 @@ ws.on('ready', (socket, httpReq) => {
             returnMessage.display = value
           }
           if (valid.isIn(key, ['username', 'name'])) {
-            returnMessage.redirect = `/${req.type}/${value}-${res.shortened_id.toString('hex')}/edit`
-            if (req.type === 'resource') {
+            returnMessage.redirect = `/${req.type}/${value}-${res.shortened_id.toString('hex')
+            }/edit`
+            if (req.type === 'resource' && req.schema === 'article' && req.original) {
               var file_path = path.join(__dirname, '../public/articles')
               fs.rename(`${file_path}/${res.name}-${res.shortened_id.toString('hex')}.html`,
               `${file_path}/${value}-${res.shortened_id.toString('hex')}.html`,
@@ -229,7 +343,8 @@ ws.on('ready', (socket, httpReq) => {
         var sql_places = sql_values.map((v,i) => `$${i+2}`)
         sql_values.unshift(res.id)
         sql_keys = (sql_keys.length === 1) ? sql_keys.toString() : `(${sql_keys.toString()})`
-        sql_places = (sql_places.length === 1) ? sql_places.toString() : `(${sql_places.toString()})`
+        sql_places = (sql_places.length === 1) ? sql_places.toString() : `(${
+        sql_places.toString()})`
         var sql_query = pgQuery(`UPDATE ${req.type}s SET ${sql_keys}=${sql_places}
         WHERE id=$1`, sql_values)
         queries.push(sql_query)
@@ -238,7 +353,6 @@ ws.on('ready', (socket, httpReq) => {
         var mongo_query = models[req.type].findById(res.id)
         .then(doc => {
           for (var i = mongo_keys.length; i >= 0; i--) {
-            // if (mongo_values[i] === 'toggle') doc[mongo_keys[i]] = !doc[mongo_keys[i]]
             doc[mongo_keys[i]] = mongo_values[i]
           }
           return doc.save()

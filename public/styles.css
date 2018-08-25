@@ -40,6 +40,10 @@ html, body {
   position: fixed;
 }
 
+.hidden {
+  display: none;
+}
+
 .inblock {
   display: inline-block;
 }
@@ -110,6 +114,10 @@ html, body {
   overflow: auto;
 }
 
+.nooverflow {
+  overflow: hidden;
+}
+
 .fullwidth, .full, .tr, select, input[type="text"], input[type="password"],
 input[type="email"] {
   width: 100%;
@@ -136,6 +144,16 @@ input[type="email"] {
 
 .round, input, button, img, textarea, select {
   border-radius: 5px;
+}
+
+.pixel {
+  image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
+  image-rendering: -moz-crisp-edges;          /* Firefox                        */
+  image-rendering: -o-crisp-edges;            /* Opera                          */
+  image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+  image-rendering: pixelated; /* Chrome */
+  image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
+  -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
 }
 
 .aligntop {
@@ -203,7 +221,6 @@ header {
     color: #CCCCCC;
   }
   header.background {
-    position: sticky;
     z-index: 1;
     top: 0;
   }

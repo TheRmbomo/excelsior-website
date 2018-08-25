@@ -71,8 +71,10 @@ app.route('/create-path')
   var {id, display_name, tags, description} = req.body
   if (!display_name) return res.status(400).send({display_name: 'required'})
   if (!id) return res.status(400).send({id: 'required'})
+  var uuid_regex = `^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-${''
+  }[0-9A-F]{12}$`
   if (!valid.isUUID(id) ||
-  !valid.matches(id, /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i)) {
+  !valid.matches(id, new RegExp(uuid_regex, 'i'))) {
     return res.status(400).send({id: 'invalid'})
   }
 
@@ -87,7 +89,8 @@ app.route('/create-path')
   .then(q => q.rows[0])
   .then(path => {
     if (path) id = null
-    var sql_properties = ['name', 'display_name', 'tags', 'created_by', 'last_modified_by'],
+    var sql_properties = ['name', 'display_name', 'tags', 'created_by',
+    'last_modified_by'],
     sql_places = ['$1','$2','$3','$4','$4'],
     params = [name, display_name, tags, req.user.id]
     if (id) {
@@ -101,8 +104,7 @@ app.route('/create-path')
   .then(row => {
     var shortened_id = shortenId(row.id)
     console.log('Created path');
-    pgQuery(`UPDATE paths SET shortened_id=$2 WHERE id=$1`,
-    [row.id, shortened_id])
+    pgQuery(`UPDATE paths SET shortened_id=$2 WHERE id=$1`, [row.id, shortened_id])
     var path = new Path()
     path._id = row.id
     path.description = description
@@ -120,8 +122,8 @@ var pathRouter = express.Router()
 app.get('/paths/:id', (req, res) => res.redirect(`/path/${req.params.id}`))
 app.use('/path/:id', (req, res, next) => objectPage({
   type: 'path',
-  properties: `id, is_public, name, display_name, created_by, created_at, last_modified_by,
-  last_modified_at, image_path, shortened_id`,
+  properties: `id, is_public, name, display_name, created_by, created_at,
+  last_modified_by, last_modified_at, image_path, shortened_id`,
   condition: 'WHERE name=$1 AND shortened_id=$2',
   model: Path
 })(req, res, next)
@@ -130,8 +132,10 @@ app.use('/path/:id', (req, res, next) => objectPage({
     contributors: [],
     contentCount: 0
   }, path, {
-    contributors: `${path.contributors.length} ${path.contributors.length !== 1 ? 'People' : 'Person'}`,
-    contentCount: `${path.contentCount} ${path.contentCount !== 1 ? 'Resources' : 'Resource'}`,
+    contributors: `${path.contributors.length
+    } ${path.contributors.length !== 1 ? 'People' : 'Person'}`,
+    contentCount: `${path.contentCount
+    } ${path.contentCount !== 1 ? 'Resources' : 'Resource'}`,
     owned: (req.user && req.user.id === path.created_by),
     url: `/path/${path.name}-${path.shortened_id}`
   })
@@ -154,12 +158,27 @@ pathRouter.get('/edit', (req, res, next) => {
   var path = res.locals.path
   if (path.created_by !== req.user.id) return res.redirect(`/path/${path.url}`)
 
-  path.is_public ? (path.is_public = 'checked') : (path.is_private = 'checked', path.is_public = '')
+  path.is_public ? (path.is_public = 'checked') :
+  (path.is_private = 'checked', path.is_public = '')
 
   return res.render('settings', {
     header: 'Path',
     type: 'path',
     page: 'path_edit',
     title: 'Editing Path'
+  })
+})
+
+pathRouter.get('/creator', (req, res, next) => {
+  if (!req.user) return next('auth')
+
+  var path = res.locals.path
+  if (path.created_by !== req.user.id) return res.redirect(`/path/${path.url}`)
+
+  return res.render('creator', {
+    hide_header: true,
+    hide_footer: true,
+    title: 'Paving A Path',
+    path
   })
 })
