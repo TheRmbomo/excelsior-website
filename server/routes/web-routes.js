@@ -16,8 +16,9 @@ listResults = (req, rows, opt) => rows.reduce((promise, res) => promise.then(tex
   if (opt.type === 'path') {
     res.following = (req.user && req.user.paths_following.indexOf(res.id) !== -1)
   }
+  res.shortened_id = res.shortened_id.toString('hex')
   res.last_modified_at = req.format_date(res.last_modified_at)
-  res.url = `/${opt.type}/${res.name}-${res.shortened_id.toString('hex')}`
+  res.url = `/${opt.type}/${res.name}-${res.shortened_id}`
 
   if (res.created_by !== '00000000-0000-0000-0000-000000000000') {
     return pgQuery(`SELECT id, display_name, username, shortened_id FROM users

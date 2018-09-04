@@ -1,23 +1,29 @@
-{{!--
 <div class="island fullwidth table" style="border-spacing: 0;">
   <div class="tr">
     <div class="td" style="width: 2em;">
-      <button type="button" style="background-image: url(/img/arrow_left.png); background-size: 80% 100%; background-repeat: no-repeat; background-position: center;"></button>
+      <button id="tray-left" type="button" style="background-image: url(/img/arrow_left.png); background-size: 80% 100%; background-repeat: no-repeat; background-position: center;"></button>
     </div>
-    <div class="td" style="overflow: hidden; white-space: nowrap;">
-      <button type="button" style="border-radius: 5px 5px 0 0;">Display</button>
-      <button type="button" style="border-radius: 5px 5px 0 0;">Private</button>
-      <button type="button" style="border-radius: 5px 5px 0 0;">Content</button>
-      <button type="button" style="border-radius: 5px 5px 0 0;">Analytics</button>
-      <button type="button" style="border-radius: 5px 5px 0 0;">Manage</button>
+    <div class="td">
+      <nav id="tray" style="overflow: hidden; white-space: nowrap;">
+        <button class=". menu-option" value="display" type="button" style="border-radius: 5px 5px 0 0;">Display</button>
+        {{!--
+        <button class="menu" type="button" style="border-radius: 5px 5px 0 0;">Private</button>
+        --}}
+        <button class=". menu-option" value="content" type="button" style="border-radius: 5px 5px 0 0;">Content</button>
+        {{!--
+        <button class="menu" type="button" style="border-radius: 5px 5px 0 0;">Analytics</button>
+        --}}
+        {{!--
+        <button class="menu" type="button" style="border-radius: 5px 5px 0 0;">Manage</button>
+        --}}
+      </nav>
     </div>
     <div class="td" style="width: 2em;">
-      <button type="button" style="background-image: url(/img/arrow_right.png); background-size: 80% 100%; background-repeat: no-repeat; background-position: center;"></button>
+      <button id="tray-right" type="button" style="background-image: url(/img/arrow_right.png); background-size: 80% 100%; background-repeat: no-repeat; background-position: center;"></button>
     </div>
   </div>
 </div>
---}}
-<div id="display" class="round background padding overflow" style="max-height: 30em;">
+<div id="display" class="round background padding overflow . menu" style="max-height: 30em;">
   <div class="fullwidth table list">
     <div class="tr">
       <div class="td">
@@ -66,5 +72,8 @@
       </div>
     </div>
   </div>
+</div>
+<div id="content" class="round background padding overflow . menu" style="max-height: 30em;">
+  <a href="{{url}}/creator"><button type="button" class="light background">Enter Creator</button></a>
 </div>
 {{> pageJS js="path_edit"}}

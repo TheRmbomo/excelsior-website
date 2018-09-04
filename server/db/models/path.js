@@ -25,10 +25,7 @@ const Path = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'ReviewList'
   },
-  initial_resource: Schema.Types.ObjectId,
-  content: {
-    type: Schema.Types.Mixed
-  },
+  content: Schema.Types.Mixed,
   contentCount: Number,
   admins: [{
     type: String,
@@ -40,16 +37,18 @@ const Path = new Schema({
   }],
   show_description: trueBool
   /*
-  content: {
-    (ObjectId): {
-      test: [Function] // For Conditionals
-      child: {
-        type: Schema.Types.ObjectId
-        refPath: 'childKind'
-      }
-      childKind: String -- Video / Article / Conditional / ...
+  content: [
+    {
+      url: String,
+      next: Number > content[Number]
+    },
+    {
+      test: () => {},
+      choices: [
+        Number, Number, Number, ... > content[Number]
+      ]
     }
-  }
+  ]
   */
 })
 

@@ -1,7 +1,6 @@
 var resource = {id: Array.from(_class('resource'))[0].id},
 id = resource.id,
 update_source_field = original => {
-  console.log(original);
   if (original) {
     _id('original').style.display = ''
     _id('embed').style.display = 'none'
@@ -12,17 +11,15 @@ update_source_field = original => {
 },
 update_model = req => ws.emit('update_model', req, res => {
   try {
-    if (res.error) {
-      try {
-        res.error.map(error => error_blurb(error))
-      } catch (e) {
-        return console.error(res.error);
-      }
-    }
-    else req.properties.map(id => _id(id).style.backgroundColor = '')
-  } catch (e) {}
+    if (res.error) res.error.map(error => error_blurb(error))
+    else req.properties.map(id => {
+      if (_id(id)) _id(id).style.backgroundColor = ''
+    })
+  } catch (e) {
+    return console.error(res.error);
+  }
   if (res.redirect) window.location = res.redirect
-  if (res.display) _id('display').innerHTML = res.display
+  if (res.display) _id('display_name').innerHTML = res.display
 })
 
 Array.from(_class('change'), c => {
@@ -34,6 +31,8 @@ Array.from(_class('change'), c => {
     req = {
       id,
       type: 'resource',
+      schema: _id('type').innerHTML.toLowerCase().trim(),
+      original: !!_id('select_original').checked,
       properties: [current.name],
       values: [current.value]
     }

@@ -12,7 +12,7 @@ update_model = req => ws.emit('update_model', req, res => {
     else req.properties.map(id => _id(id).style.backgroundColor = '')
   } catch (e) {}
   if (res.redirect) window.location = res.redirect
-  if (res.display) _id('display').innerHTML = res.display
+  if (res.display) _id('display_name').innerHTML = res.display
 })
 
 Array.from(_class('change'), c => {
