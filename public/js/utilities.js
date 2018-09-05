@@ -14,6 +14,7 @@ getParents = (depth, element) => {
 },
 round = (num, place=2) => Math.round(num*Math.pow(10,place))/Math.pow(10,place),
 getUnset = (elem, property) => {
+  if (!elem || !property) throw '2 arguments required'
   let original = elem.style[property]
   elem.style[property] = ''
   let unset = getComputedStyle(elem)[property]
@@ -52,6 +53,15 @@ var animate = (render, jump = true) => {
     })(start)
   })
 },
+stepAnimate = opt => animate((duration, dT) => {
+  if (duration > opt.duration) dT = duration - opt.duration
+  opt.animate.map(property => {
+    property[0][property[1]] += property[2]/opt.duration*dT
+  })
+  if (typeof opt.animateCB === 'function') opt.animateCB(duration, dT)
+  if (duration <= opt.duration) return true
+  else return opt.return
+}),
 animateResult = opt => new Promise((resolve, reject) => {
   opt = Object.assign({
     elements: [],

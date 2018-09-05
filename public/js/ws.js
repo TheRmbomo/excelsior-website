@@ -7,20 +7,17 @@ WebSocket.prototype.emit = function (event, data, callback) {
     data = {}
   } else if (typeof callback !== 'function') callback = undefined
 
-  let req = {event, data}
+  var req = {event, data}, promise = Promise.resolve()
   if (callback) req.callback = true
-  if (ws.readyState === 1) ws.send(JSON.stringify(req))
-  else {
-    new Promise(resolve => {
-      let interval = setInterval(() => {
-        if (ws.available) return resolve(clearInterval(interval))
-      }, 50)
-    })
-    .then(() => ws.send(JSON.stringify(req)))
-  }
+  if (ws.readyState !== 1) promise = promise.then(() => new Promise(resolve => {
+    let interval = setInterval(() => {
+      if (ws.available) return resolve(clearInterval(interval))
+    }, 50)
+  }))
+  promise.then(() => ws.send(JSON.stringify(req))).catch(e => console.log(e))
   if (!callback) return
+  
   // Callback
-
   ws.on(`callback-${event}`, function () {
     callback.apply(null, arguments)
     delete ws.events[`callback-${event}`]
