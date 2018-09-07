@@ -35,7 +35,7 @@ ws.on('connection', (socket, req) => {
     var req = {event}
     if (data) req.data = data
 
-    var res = this._send(JSON.stringify(req))
+    if (this.readyState === 1) this._send(JSON.stringify(req))
   }
 
   socket._on('message', req => {
@@ -71,23 +71,22 @@ ws.on('connection', (socket, req) => {
   } catch (e) {}
   socket.session = null
 
-  Promise.resolve()
-  .then(() => {
-    if (!socket.sessionID) throw 'No session'
-    return new Promise((resolve, reject) => redisClient.get(socket.sessionID, (err, session) => {
-      if (err) return reject(err)
-      resolve(session)
-    }))
-    .then(session => {
-      if (!session) throw 'No session'
-      session.save = () => new Promise((resolve, reject) => {
-        redisClient.set(socket.sessionID, session, err => {
-          if (err) reject(err)
-          resolve()
+  var promise = Promise.resolve()
+  if (socket.sessionID) {
+    promise = promise.then(() => {
+      return new Promise((resolve, reject) => redisClient.get(socket.sessionID, (err, session) => {
+        if (err) return reject(err)
+        resolve(session)
+      }))
+      .then(session => {
+        if (!session) throw 'No session'
+        session.save = () => new Promise((resolve, reject) => {
+          redisClient.set(socket.sessionID, session, err => {
+            if (err) reject(err)
+            resolve()
+          })
         })
-      })
-      socket.session = session
-      try {
+        socket.session = session
         socket.user = {id: socket.session.passport.user}
         return pgQuery(`SELECT username, shortened_id FROM users WHERE id=$1`, [socket.user.id])
         .then(q => q.rows[0])
@@ -95,14 +94,12 @@ ws.on('connection', (socket, req) => {
           socket.user.name = user.username
           socket.user.shortened_id = user.shortened_id.toString('hex')
         })
-      } catch (e) {console.log(e);}
+      })
     })
-  })
-  .then(() => ws.emit('ready', socket, req))
-  .catch(e => {
-    if (e === 'No session') return
-    console.log(Error('Could not connect to session'))
-  })
+  }
+
+  promise.then(() => ws.emit('ready', socket, req))
+  .catch(e => e)
 })
 
 module.exports = ws

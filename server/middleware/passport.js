@@ -86,8 +86,7 @@ createUser = opt => new Promise((resolve, reject) => {
     if (user.code) return reject('Error: Cannot connect to database')
 
     user.shortened_id = shortenId(user.id)
-    var doc_user = new User()
-    doc_user._id = user.id
+    var doc_user = new User({_id: user.id})
     doc_user.save()
     console.log('PLACEHOLDER: Email sent')
     return resolve(user)

@@ -8,6 +8,8 @@ const {app} = require('./../app')
 const {pgQuery} = require('./../db/pg')
 const {shortenId} = require('./../middleware/passport')
 const Path = require('./../db/models/path')
+const Resource = require('./../db/models/resource')
+const PathStatus = require('./../db/models/pathStatus')
 const {listResults, pathGroup, resourceGroup, objectPage} = require('./web-routes')
 
 var err = e => console.log(Error(e))
@@ -105,9 +107,7 @@ app.route('/create-path')
     var shortened_id = shortenId(row.id)
     console.log('Created path');
     pgQuery(`UPDATE paths SET shortened_id=$2 WHERE id=$1`, [row.id, shortened_id])
-    var path = new Path()
-    path._id = row.id
-    path.description = description
+    var path = new Path({_id: row.id, description})
     return path.save().then(() => shortened_id.toString('hex'))
   })
   .then(shortened_id => res.redirect(`/path/${name}-${shortened_id}`))
@@ -180,5 +180,33 @@ pathRouter.get('/creator', (req, res, next) => {
     hide_footer: true,
     title: 'Paving A Path',
     path
+  })
+})
+
+pathRouter.get('/:index', (req, res, next) => {
+  var index = parseFloat(req.params.index) - 1
+  var {path} = res.locals, {content} = path
+  if (index === -1) return res.redirect(path.url + '/1')
+  if (isNaN(index) || !(content.length > index && index >= 0)) return res.redirect(path.url)
+
+  var promise = Promise.resolve()
+  if (req.user) {
+    var statusQuery = {user: req.user.id, path: path.id}
+    promise = promise.then(() => PathStatus.find(statusQuery))
+    .then(docs => {
+      if (docs.length === 0) return new PathStatus(statusQuery).save()
+      else return docs[0]
+    })
+  }
+  promise.then(doc => {
+    if (doc) var current_status = doc.progress[0]
+    var current_resource = path.content[index]
+    if (!content[index]) return res.redirect(path.url)
+    return res.render('inpath', {
+      hide_header: true,
+      hide_footer: true,
+      title: path.display_name, path, index,
+      resource_url: content[index].url
+    })
   })
 })

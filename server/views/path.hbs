@@ -12,17 +12,24 @@
       <td>Author:</td>
       <td><a href="{{authorURL}}">{{author}}</a></td>
     </tr>
+    {{!--
     <tr>
       <td>Contributors:</td>
       <td><a href="#">{{contributors}}</a></td>
     </tr>
-    {{!--
     <tr>
       <td>Content #:</td>
       <td><a href="#">{{contentCount}}</a></td>
     </tr>--}}
   </table>
   <button type="button" class="border half . follow">Follow</button>
+</div>
+<div class="center island round dark background padding" style="max-width: 40em; margin-bottom: 1em;">
+  <a id="enter" href="{{url}}/0">
+    <button type="button" name="button" style="width: 20em;">
+      <h1>Enter</h1>
+    </button>
+  </a>
 </div>
 {{#if show_description}}
 <div class="island round dark background padding" style="max-width: 40em; margin-bottom: 1em;">

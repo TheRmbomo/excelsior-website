@@ -106,10 +106,8 @@ app.route('/create-resource')
   .then(row => {
     var shortened_id = shortenId(row.id)
     console.log('Created resource')
-    var resource = new models[type]()
-    Object.assign(resource, {
-      description, source,
-      _id: row.id
+    var resource = new models[type]({
+      _id: row.id, description, source
     })
     return resource.save()
     .then(doc => pgQuery(`UPDATE resources SET shortened_id=$2 WHERE id=$1`, [row.id, shortened_id]))
@@ -189,5 +187,16 @@ resourceRouter.get('/edit', (req, res, next) => {
       title: 'Editing Resource',
       text
     })
+  })
+})
+
+resourceRouter.get('/embed', (req, res, next) => {
+  var resource = res.locals.resource
+
+  res.render('resource', {
+    hide_header: true,
+    hide_footer: true,
+    embed: true,
+    title: resource.display_name
   })
 })

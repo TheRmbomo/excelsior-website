@@ -1,31 +1,3 @@
-/**
- * two.js
- * a two-dimensional drawing api meant for modern browsers. It is renderer
- * agnostic enabling the same api for rendering in multiple contexts: webgl,
- * canvas2d, and svg.
- *
- * Copyright (c) 2012 - 2017 jonobr1 / http://jonobr1.com
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- */
-
 this.Two = (function(previousTwo) {
 
   var root = typeof window != 'undefined' ? window : typeof global != 'undefined' ? global : null;
@@ -10251,3 +10223,90 @@ this.Two = (function(previousTwo) {
   }
 
 })((typeof global !== 'undefined' ? global : this).Two);
+
+let loadTwoUtils = obj => Object.assign(obj, {
+  getDOM: twoElement => new Promise((resolve, reject) => {
+    if (!twoElement || !twoElement._renderer) return reject({
+      error: 'Invalid element',
+      element: twoElement
+    })
+    animate(a => {
+      if (twoElement._renderer.elem) return resolve(twoElement._renderer.elem)
+      else if (a >= 500) return reject('Not found')
+      else return true
+    })
+  }).then(e => (e.two = twoElement, e)),
+  getDOMs: array => Promise.all(array.map(e => obj.getDOM(e))).then(elements => {
+    var obj = {}
+    elements.map((e, i) => obj[array[i].key] = e)
+    return obj
+  }).catch(e => console.error(e)),
+  openTab: url => {
+    var a = document.createElement('a'),
+    e = document.createEvent('MouseEvents')
+    a.target = '_blank'
+    a.href = url
+    e.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0,
+    false, false, false, false, 0, null)
+    a.dispatchEvent(e)
+  },
+  createModel: opt => {
+    var group = opt.group || new Two.Group(),
+    is_gotDOM = typeof opt.gotDOM === 'function'
+    group.childKeys = []
+    if (is_gotDOM) var elements = []
+    if (opt.elements) group.add(opt.elements.map(element => {
+      group.childKeys.push(element[0])
+      element[1].key = element[0]
+      if (group.key) element[1].key = group.key + '_' + element[1].key
+      else if (opt.name) element[1].key = opt.name + '_' + element[1].key
+      group[element[0]] = element[1]
+      if (is_gotDOM) elements.push(element[1])
+      return element[1]
+    }))
+    Object.freeze(group.childKeys)
+    if (opt.parent) opt.parent.add(group)
+    group.key = group.key || opt.name || 'group'
+    if (opt.v) group.translation.copy(opt.v)
+    if (is_gotDOM) {
+      elements.push(group)
+      obj.getDOMs(elements).then(opt.gotDOM)
+    }
+    return group
+  },
+  mouse: {
+    events: opt => {
+      var {two} = obj,
+      mousemove = event => {
+        if (!event.touches) var page = new Two.Vector(event.pageX, event.pageY)
+        else var page = new Two.Vector(event.touches[0].pageX, event.touches[0].pageY)
+
+        if (!two.is_moving) {
+          two.mouse = page.clone()
+          two.is_moving = true
+          return
+        }
+
+        if (typeof opt.move === 'function') opt.move(page)
+        two.mouse = page.clone()
+      },
+      mouseup = event => {
+        two.is_moving = false
+        window.removeEventListener('mousemove', mousemove)
+        window.removeEventListener('touchmove', mousemove)
+        if (typeof opt.over === 'function') window.removeEventListener('mouseover', mouseover)
+        window.removeEventListener('mouseup', mouseup)
+        window.removeEventListener('touchend', mouseup)
+        if (typeof opt.up === 'function') opt.up()
+      },
+      mouseover = event => {
+        if (typeof opt.over === 'function') opt.over(event.target)
+      }
+      window.addEventListener('mousemove', mousemove)
+      window.addEventListener('touchmove', mousemove)
+      window.addEventListener('mouseup', mouseup)
+      window.addEventListener('touchend', mouseup)
+      if (typeof opt.over === 'function') window.addEventListener('mouseover', mouseover)
+    }
+  }
+})

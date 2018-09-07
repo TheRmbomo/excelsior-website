@@ -70,7 +70,8 @@ sanitize = (key, value) => {
   if (valid.isIn(key, ['tags'])) value = value.split(/\W+/)
 
   return value
-}
+},
+pick = (obj, keys) => Object.assign({}, ...keys.map(k => k in obj ? {[k]: obj[k]} : {}))
 
 app.use((req, res, next) => {
   req.format_date = format_date
@@ -80,5 +81,6 @@ app.use((req, res, next) => {
 
 module.exports = {
   format_date,
-  sanitize
+  sanitize,
+  pick
 }

@@ -1,29 +1,4 @@
 let creator = {
-  getDOM: twoElement => new Promise((resolve, reject) => {
-    if (!twoElement || !twoElement._renderer) return reject({
-      error: 'Invalid element',
-      element: twoElement
-    })
-    animate(a => {
-      if (twoElement._renderer.elem) return resolve(twoElement._renderer.elem)
-      else if (a >= 500) return reject('Not found')
-      else return true
-    })
-  }).then(e => (e.twoElement = twoElement, e)),
-  getDOMs: array => Promise.all(array.map(e => creator.getDOM(e))).then(elements => {
-    var obj = {}
-    elements.map((e, i) => obj[array[i].key] = e)
-    return obj
-  }).catch(e => console.error(e)),
-  openTab: url => {
-    var a = document.createElement('a'),
-    e = document.createEvent('MouseEvents')
-    a.target = '_blank'
-    a.href = url
-    e.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0,
-    false, false, false, false, 0, null)
-    a.dispatchEvent(e)
-  },
   two: new Two({
     fullscreen: true
     // width: parseFloat(getComputedStyle(document.body).width),
@@ -41,28 +16,7 @@ let creator = {
   resources: new Two.Group(),
   arrows: new Two.Group()
 }
-
-creator.header.style.display = 'block'
-creator.headerHeight = parseFloat(getComputedStyle(creator.header).height)
-creator.header.style.display = ''
-creator.canvas = creator.two.renderer.domElement
-
-creator.pathURL = _id('url').innerText
-var header = creator.header.children[0].children[0]
-header.children[0].style.width = '3em'
-var backCell = document.createElement('DIV'),
-backLink = document.createElement('A'),
-backButton = document.createElement('BUTTON'),
-backText = document.createTextNode('Back to Path'),
-spacer = document.createElement('DIV')
-backCell.classList.add('td')
-backLink.href = creator.pathURL
-backButton.style.minWidth = '4.5em'
-backButton.appendChild(backText)
-backLink.appendChild(backButton)
-backCell.appendChild(backLink)
-header.insertBefore(spacer, header.children[1])
-header.insertBefore(backCell, header.children[1])
+loadTwoUtils(creator)
 
 window.addEventListener('resize', event => {
   var {two} = creator
@@ -92,9 +46,32 @@ window.addEventListener('resize', event => {
 ;(() => {
   var {
     two, getDOM, view, hud,
+    header, headerHeight,
     resourceGroups, resources, arrows
-  } = creator,
-  background = new Two.Rectangle(
+  } = creator
+  header.style.display = 'block'
+  headerHeight = parseFloat(getComputedStyle(header).height)
+  header.style.display = ''
+  creator.canvas = two.renderer.domElement
+
+  creator.pathURL = _id('url').innerText
+  var headerDIV = header.children[0].children[0],
+  backCell = document.createElement('DIV'),
+  backLink = document.createElement('A'),
+  backButton = document.createElement('BUTTON'),
+  backText = document.createTextNode('Back to Path'),
+  spacer = document.createElement('DIV')
+  headerDIV.children[0].style.width = '3em'
+  backCell.classList.add('td')
+  backLink.href = creator.pathURL
+  backButton.style.minWidth = '4.5em'
+  backButton.appendChild(backText)
+  backLink.appendChild(backButton)
+  backCell.appendChild(backLink)
+  headerDIV.insertBefore(spacer, headerDIV.children[1])
+  headerDIV.insertBefore(backCell, headerDIV.children[1])
+
+  var background = new Two.Rectangle(
     Math.max(two.width, 500)/2,
     Math.max(two.height, 500)/2,
     Math.max(two.width, 500),
@@ -119,7 +96,7 @@ window.addEventListener('resize', event => {
   two.scene.add([view, hud])
   getDOM(hud).catch(e => console.error(e))
 
-  var loading = new Two.Text('Loading...', 250, (two.height-40)/2, {
+  var loading = new Two.Text('Loading...', two.width/2, (two.height-40)/2, {
     size: 60, fill: '#FFF', family: 'Cabin, sans-serif'
   })
   hud.add(loading)
@@ -135,7 +112,7 @@ window.addEventListener('resize', event => {
   getDOM(background)
 })()
 
-creator.mouse = {
+creator.mouse = Object.assign(creator.mouse || {}, {
   start: (element, listener, passive) => {
     if (passive !== undefined) var opt = {passive}
     element.addEventListener('mousedown', listener)
@@ -149,44 +126,10 @@ creator.mouse = {
       listener(event)
     }, opt)
   },
-  events: opt => {
-    var {two} = creator,
-    mousemove = event => {
-      console.log('no');
-      if (!event.touches) var page = new Two.Vector(event.pageX, event.pageY)
-      else var page = new Two.Vector(event.touches[0].pageX, event.touches[0].pageY)
-
-      if (!two.is_moving) {
-        two.mouse = page.clone()
-        two.is_moving = true
-        return
-      }
-
-      if (typeof opt.move === 'function') opt.move(page)
-      two.mouse = page.clone()
-    },
-    mouseup = event => {
-      two.is_moving = false
-      window.removeEventListener('mousemove', mousemove)
-      window.removeEventListener('touchmove', mousemove)
-      if (typeof opt.over === 'function') window.removeEventListener('mouseover', mouseover)
-      window.removeEventListener('mouseup', mouseup)
-      window.removeEventListener('touchend', mouseup)
-      if (typeof opt.up === 'function') opt.up()
-    },
-    mouseover = event => {
-      if (typeof opt.over === 'function') opt.over(event.target)
-    }
-    window.addEventListener('mousemove', mousemove)
-    window.addEventListener('touchmove', mousemove)
-    window.addEventListener('mouseup', mouseup)
-    window.addEventListener('touchend', mouseup)
-    if (typeof opt.over === 'function') window.addEventListener('mouseover', mouseover)
-  },
   down: event => {
     event.preventDefault()
     var {two, view} = creator,
-    targetT = event.target.twoElement,
+    targetT = event.target.two,
     canDrag = event.target === creator.canvas || (targetT && targetT.name === 'scene')
     handleContextMenu = () => {
       if (targetT && creator.contextMenu) {
@@ -245,7 +188,10 @@ creator.mouse = {
       })
       if (creator.contextMenu) creator.mouse.events({
         element: creator.contextMenu,
-        move: page => creator.contextMenu.translation.copy(page)
+        move: page => creator.contextMenu.translation.copy(page).addSelf({
+          x: creator.contextMenu.width/2,
+          y: creator.contextMenu.height/2
+        })
       })
     }
 
@@ -280,7 +226,7 @@ creator.mouse = {
       }, time || 500)
     })
   }
-}
+})
 window.addEventListener('mousewheel', event => {
   var two = creator.two
   if (event.ctrlKey) event.preventDefault()
@@ -331,37 +277,20 @@ window.addEventListener('mousewheel', event => {
 window.addEventListener('contextmenu', event => event.preventDefault())
 creator.mouse.start(window, creator.mouse.down, false)
 
-creator.createModel = opt => {
-  var group = opt.group || new Two.Group()
-  group.childKeys = []
-  if (opt.elements) group.add(opt.elements.map(element => {
-    group.childKeys.push(element[0])
-    element[1].key = element[0]
-    if (group.key) element[1].key = group.key + '_' + element[1].key
-    else if (opt.name) element[1].key = opt.name + '_' + element[1].key
-    group[element[0]] = element[1]
-    return element[1]
-  }))
-  Object.freeze(group.childKeys)
-  if (opt.parent) opt.parent.add(group)
-  group.key = group.key || opt.name || 'group'
-  if (opt.v) group.translation.copy(opt.v)
-  return group
-}
-
 creator.createContextMenu = opt => {
   var removeContextMenu = () => { if (creator.contextMenu) {
     creator.contextMenu.parent.remove(creator.contextMenu)
     delete creator.contextMenu
   }}
   removeContextMenu()
-  var {width, optionHeight, gap, options, v, gotDOM} = opt
+  var {width, optionHeight, gap, options, v, gotDOM} = opt,
+  is_gotDOM = typeof gotDOM === 'function'
   if (!options) throw 'No options given'
   width = width || 150
   optionHeight = optionHeight || 30
   gap = gap || 5
+  if (is_gotDOM) var elements = []
   var height = options.length*optionHeight+(options.length+1)*gap,
-  elements = [],
   optionButtons = options.map((option, i) => {
     var group = creator.createModel({
       name: option[0], elements: [
@@ -371,9 +300,9 @@ creator.createContextMenu = opt => {
     })
     group.children.map(child => {
       child.name = 'cmOption'
-      elements.push(child)
+      if (is_gotDOM) elements.push(child)
     })
-    elements.push(group)
+    if (is_gotDOM) elements.push(group)
     return group
   })
   if (v) {v.x += width/2; v.y += height/2}
@@ -382,8 +311,10 @@ creator.createContextMenu = opt => {
       ['body', new Two.Rectangle(0,0,width,height)]
     ], parent: opt.parent
   }).add(optionButtons)
-  elements.push(creator.contextMenu)
-  if (typeof gotDOM === 'function') {
+  creator.contextMenu.width = width
+  creator.contextMenu.height = height
+  if (is_gotDOM) {
+    elements.push(creator.contextMenu)
     creator.getDOMs(elements)
     .then(elements => {
       options.map(option => {
@@ -433,7 +364,6 @@ creator.resource = {
 
       body.redirectTo = creator.mouse.redirect(body)
       creator.mouse.start(body, event => {
-        ws.emit('log', 'yes')
         if (!event.touches) {
           if (event.button !== 0) return
           var cursor = true, page = new Two.Vector(event.pageX, event.pageY)
@@ -441,17 +371,17 @@ creator.resource = {
         else {
           var touch = true, page = new Two.Vector(event.touches[0].pageX, event.touches[0].pageY)
         }
-        var offset = page.subSelf(body.twoElement.parent.translation)
+        var offset = page.subSelf(body.two.parent.translation)
         creator.mouse.events({
-          element: body.twoElement,
+          element: body.two,
           move: page => {
             if (cursor) {
               var delta = new Two.Vector().sub(page, creator.two.mouse)
               .divideScalar(creator.two.sceneScale)
-              body.twoElement.parent.translation.addSelf(delta)
+              body.two.parent.translation.addSelf(delta)
             }
             else if (touch) {
-              body.twoElement.parent.translation.copy(creator.two.mouse)
+              body.two.parent.translation.copy(creator.two.mouse)
               .subSelf(creator.view.translation)
               .subSelf({x:100,y:100})
             }
@@ -465,7 +395,7 @@ creator.resource = {
       creator.mouse.start(previous, creator.resource.dragInsert('previous'))
       creator.mouse.start(next, creator.resource.dragInsert('next'))
       creator.mouse.end(trash, event => {
-        var resource = event.currentTarget.twoElement.parent
+        var resource = event.currentTarget.two.parent
         if (!resource.arrow_next && !resource.arrow_previous) {
           return
         }
@@ -519,7 +449,7 @@ creator.resource = {
       })
 
       if (resource) {
-        var groupT = group.twoElement
+        var groupT = group.two
         groupT.name = 'occupied_resource'
         creator.resource.core.create({
           resource, parent: groupT, scale: 0.55,
@@ -541,7 +471,7 @@ creator.resource = {
       vf: currentResource => currentResource.translation.clone().addSelf({
         x: (currentResource.width/2)*direction, y: 0
       }),
-      type, currentResource: event.target.twoElement.parent,
+      type, currentResource: event.target.two.parent,
       mouseEvents: newResource => creator.mouse.events({
         element: newResource, move: page => {
           var delta = page.clone().subSelf(creator.two.mouse)
@@ -834,7 +764,7 @@ creator.path = {
 
   var resourceCoreActions = order => elements => {
     var {group, body} = elements,
-    groupT = group.twoElement
+    groupT = group.two
 
     body.redirectTo = creator.mouse.redirect(body)
 
@@ -860,7 +790,6 @@ creator.path = {
       if (!event.touches) var page = {x: event.pageX, y: event.pageY}
       else var page = {x: event.touches[0].pageX, y: event.touches[0].pageY}
       var leftButton = () => {
-        console.log('yes');
         removeTooltip()
         var clone = groupT.clone()
         group.style.pointerEvents = 'none'
@@ -877,8 +806,7 @@ creator.path = {
           element: clone,
           move: page => clone.translation.addSelf(page).subSelf(two.mouse),
           over: target => {
-            console.log(target);
-            var twoE = target.twoElement
+            var twoE = target.two
             if (!twoE) return delete clone.target
 
             if (twoE.parent && twoE.parent.resource) {
@@ -1030,14 +958,14 @@ creator.path = {
                 creator.mouse.events({
                   element: group,
                   move: page => {
-                    group.twoElement.translation.addSelf(page).subSelf(two.mouse)
+                    group.two.translation.addSelf(page).subSelf(two.mouse)
                     creator.infoT = {
                       x: creator.information.translation.x,
                       y: creator.information.translation.y
                     }
                   },
                   up: () => {
-                    var tl_0 = group.twoElement.translation, tl = {
+                    var tl_0 = group.two.translation, tl = {
                       x: Math.min(Math.max(tl_0.x,-body_w/2+60),two.width+body_w/2-30),
                       y: Math.min(Math.max(tl_0.y,body_h/2),two.height+body_h/2-30)
                     }; stepAnimate({duration: 1000, animate: [
@@ -1058,7 +986,7 @@ creator.path = {
               description.style.cursor = 'default'
               author_text.style.cursor = 'pointer'
 
-              author_text.twoElement.translation.x += (
+              author_text.two.translation.x += (
                 author_label.getBoundingClientRect().width + 10
               )
               creator.mouse.end(author_text, event => {
@@ -1066,12 +994,12 @@ creator.path = {
                 creator.openTab(groupT.resource.author_url)
               })
               author_text.addEventListener('mouseover', event => {
-                author_text.twoElement.fill = '#8AF'
+                author_text.two.fill = '#8AF'
               })
               author_text.addEventListener('mouseout', event => {
-                author_text.twoElement.fill = '#FFF'
+                author_text.two.fill = '#FFF'
               })
-              createdAt_text.twoElement.translation.x += (
+              createdAt_text.two.translation.x += (
                 createdAt_label.getBoundingClientRect().width + 10
               )
             })
@@ -1169,7 +1097,6 @@ creator.path = {
           }
           resourceMenu.remove(resourceMenu.loading)
           delete resourceMenu.loading
-          console.log(res);
           resourceMenu.results.remove(resourceMenu.results.children)
           res.map(resource => {
             var number = resourceMenu.results.children.length,
@@ -1235,7 +1162,7 @@ creator.path = {
         header.style.top = `${headerHeight}px`
 
         stepAnimate({duration: 200, animate: [
-          [open.twoElement.translation, 'y', headerHeight],
+          [open.two.translation, 'y', headerHeight],
           [change, 'tempHeight', headerHeight]
         ],
         animateCB: () => {
@@ -1243,7 +1170,7 @@ creator.path = {
         }})
         .then(() => {
           isOpen.header = 'open'
-          open.twoElement.translation.y = headerHeight + 10
+          open.two.translation.y = headerHeight + 10
           header.style.top = '0'
         })
       }
@@ -1252,7 +1179,7 @@ creator.path = {
         change.tempHeight = 0
 
         stepAnimate({duration: 200, animate: [
-          [open.twoElement.translation, 'y', -headerHeight],
+          [open.two.translation, 'y', -headerHeight],
           [change, 'tempHeight', -headerHeight]
         ],
         animateCB: () => {
@@ -1261,7 +1188,7 @@ creator.path = {
         .then(() => {
           isOpen.header = 'closed'
           header.style.display = ''
-          open.twoElement.translation.y = 10
+          open.two.translation.y = 10
           header.style.top = `${-headerHeight}px`
         })
       }

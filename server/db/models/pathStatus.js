@@ -11,7 +11,10 @@ const PathStatus = new Schema({
     ref: 'User'
   },
   status: String,
-  last_updated: Date,
+  last_updated: {
+    type: Date,
+    default: new Date
+  },
   progress: [{
     resource: {
       type: Schema.Types.ObjectId,
