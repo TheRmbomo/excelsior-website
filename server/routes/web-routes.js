@@ -164,8 +164,8 @@ module.exports.objectPage = objectPage
 app.get('/', (req, res) => {
   // pgQuery('UPDATE users SET emails=array_append(emails,$2) WHERE id=$1', ['def765af-4fb5-4477-9e21-0f7d24ec29c2','a@c.com'])
   res.render('index', {
-    title: 'Excelsior, the education and curation platform that fits you',
-    message: req.user ? '' : 'Welcome to Excelsior'
+    title: 'Axys Mundi, the intersection of our paths.',
+    message: req.user ? '' : 'Welcome to Axys Mundi'
   })
 })
 

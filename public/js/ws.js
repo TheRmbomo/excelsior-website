@@ -1,4 +1,4 @@
-var address = 'ws://192.168.1.223:3000'
+var address = 'wss://www.axysmundi.com'
 
 WebSocket.prototype.emit = function (event, data, callback) {
   if (typeof event !== 'string') return

@@ -14,13 +14,11 @@ const httpPort = 3000
 Object.assign(app.locals, {
   title: '',
   navigation: true,
-  absoluteDir: path.join(__dirname, '..'),
-  absolutePath: 'localhost:3001'
+  absoluteDir: path.join(__dirname, '..')
 })
 
 module.exports = {app, httpServer}
 require('./routes/public-routes')
-require('./test')
 // --
 
 // Middleware
@@ -41,7 +39,7 @@ require('./routes/path-routes')
 require('./routes/resource-routes')
 require('./routes/user-routes')
 // require('./routes/search-routes');
-// require('./routes/chatbot-routes');
+require('./routes/chatbot-routes');
 // --
 
 // Default Routes

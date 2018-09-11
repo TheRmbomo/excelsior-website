@@ -2,7 +2,7 @@ const express = require('express')
 const session = require('express-session')
 const RedisStore = require('connect-redis')(session)
 const redisClient = new RedisStore({
-  host: 'www.excelsiorindustries.com',
+  host: 'www.axysmundi.com',
   port: 6379,
   pass: process.env.REDIS
 })

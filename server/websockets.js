@@ -241,7 +241,7 @@ ws.on('ready', (socket, httpReq) => {
       if (!user) return send({error: 'Invalid authentication'})
       if (!req.type) return send({error: 'Invalid request', message: 'Type required'})
       if (req.type === 'user') {
-        var name = user.name, shortened_id = user.shortened_id,
+        var name = user.name, shortened_id = Buffer.from(user.shortened_id, 'hex'),
         sql_name = 'username'
       }
       else {
@@ -318,7 +318,7 @@ ws.on('ready', (socket, httpReq) => {
       if (!user) return send({error: 'Invalid authentication'})
       if (!req.type) return send({error: 'Invalid request', message: 'Type required'})
       if (req.type === 'user') {
-        var name = user.name, shortened_id = user.shortened_id,
+        var name = user.name, shortened_id = Buffer.from(user.shortened_id, 'hex'),
         sql_name = 'username'
       }
       else {
