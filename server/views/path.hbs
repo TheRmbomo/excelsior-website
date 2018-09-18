@@ -1,5 +1,7 @@
+<span id="logged_in" class="hidden">{{logged_in}}</span>
 {{#with path}}
-<div class="island round dark background center padding relative . path" style="max-width: 40em; margin-bottom: 1em;" id={{name}}-{{shortened_id}}>
+<span id="pathURL" class="hidden">{{url}}</span>
+<div class="island round dark background center padding relative" style="max-width: 40em; margin-bottom: 1em;" id="path">
   {{#if image_path}}<img src="{{image_path}}" style="width: 15em; height: 12em;">{{/if}}
   <h1 class="padding">{{display_name}}</h1>
   {{#if owned}}
@@ -22,7 +24,7 @@
       <td><a href="#">{{contentCount}}</a></td>
     </tr>--}}
   </table>
-  <button type="button" class="border half . follow">Follow</button>
+  <button id="follow" type="button" class="border half">Follow</button>
 </div>
 <div class="center island round dark background padding" style="max-width: 40em; margin-bottom: 1em;">
   <a id="enter" href="{{url}}/0">
@@ -31,19 +33,31 @@
     </button>
   </a>
 </div>
-{{#if show_description}}
+{{#if show_description}}{{#if description}}
 <div class="island round dark background padding" style="max-width: 40em; margin-bottom: 1em;">
   <h2 class="center padding">Description</h2>
   <div class="round background padding">{{description}}</div>
 </div>
-{{/if}}
+{{/if}}{{/if}}
 <div class="island round dark background padding" style="max-width: 40em; margin-bottom: 1em;">
   <h2 class="center padding">Reviews</h2>
   <div class="island round background padding"></div>
 </div>
 <div class="island round dark background padding" style="max-width: 40em;">
   <h2 class="center padding">Comments</h2>
-  <div class="island round background padding"></div>
+  <div class="island round background padding">
+    {{> response_field placeholder="Leave a comment..." background="dark background" action="Post" id="pathcomment" disabled="true"}}
+    <div class="fullwidth table">
+      <div class="tr">
+        <div class="td" style="width: 5em;">
+          <!-- <img src="/image_path" alt="username" style="width: 3em; height: 3em"> -->
+        </div>
+        <div class="td">
+          no
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {{/with}}
 {{> pageJS js="path"}}

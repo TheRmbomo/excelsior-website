@@ -4,6 +4,7 @@ const valid = require('validator')
 const cookie = require('cookie')
 
 const ws = require('./websockets-init')
+const {errorlog} = require('./app')
 const {pgQuery} = require('./db/pg')
 const User = require('./db/models/user')
 const Path = require('./db/models/path')
@@ -16,7 +17,18 @@ const models = {
 }
 const {sanitize, format_date, pick} = require('./middleware/utilities')
 
-var err = e => console.log(Error(e))
+var parse_url = url => {return {
+  name: url[0],
+  short_id: Buffer.from(url[1], 'hex'),
+  short_id_hex: url[1]
+}},
+invauth = {error: 'Invalid authentication'},
+invreq = message => {
+  var obj = {error: 'Invalid request'}
+  if (message) obj.message = message
+  return obj
+},
+err = send => e => (errorlog(e), send(invreq()))
 
 var sql_properties = {
   user: ['is_public', 'display_name', 'first_name', 'last_name', 'username', 'birthday',
@@ -46,11 +58,12 @@ ws.on('ready', (socket, httpReq) => {
     console.log(req);
   })
 
-  ;(function inpath() {
 
+  ;(function inpath() {
     socket.on('inpath_init', (req, send) => {
-      var url = req.url.split('/')[2].split('-'), name = url[0], short_id = Buffer.from(url[1], 'hex')
-      pgQuery(`SELECT id, created_at FROM paths WHERE name=$1 AND shortened_id=$2`, [name, short_id]
+      var {name, short_id} = parse_url(req.url.split('/')[2].split('-'))
+      pgQuery(`SELECT id, created_at FROM paths WHERE name=$1 AND shortened_id=$2`,
+        [name, short_id]
       ).then(q => q.rows[0])
       .then(path => Path.findById(path.id).then(doc => {
         doc = doc.toObject()
@@ -62,15 +75,14 @@ ws.on('ready', (socket, httpReq) => {
         var list = [],
         order = doc.content.map(resource => {
           if (!resource) return null
-          var url = resource.url,index = list.indexOf(url)
+          var url = resource.url, index = list.indexOf(url)
           if (index === -1) var stackIndex = list.push(url) - 1
           else var stackIndex = index
           return {stackIndex, next: resource.next}
         }),
         resources = list.map(full_url => {
           if (!full_url) return Promise.resolve(null)
-          var url = full_url.split('/')[2].split('-'), name = url[0],
-          short_id = Buffer.from(url[1], 'hex')
+          var {name, short_id} = parse_url(full_url.split('/')[2].split('-'))
           return pgQuery(`SELECT id, display_name, rating, created_at,
             image_path FROM resources WHERE name=$1 AND shortened_id=$2`, [name, short_id]
           ).then(q => q.rows[0])
@@ -82,26 +94,25 @@ ws.on('ready', (socket, httpReq) => {
             var new_doc = pick(doc, ['description'])
             return Object.assign(new_doc, row)
           }))
+          .catch(e => null)
         })
 
-        return Promise.all(resources).then(resources => (path.content = {resources, order}, path))
-      })).then(data => {
-        send(data)
-      })
+        return Promise.all(resources).then(resources => {
+          path.content = {resources, order}
+          return send(path)
+        })
+      }))
+      .catch(err(send))
     })
-
   })()
 
   ;(function creator() {
     socket.on('creator_save', (req, send) => {
-      if (!user) return send({error: 'Invalid authentication'})
-      var {url, save} = req
-      if (JSON.stringify(save).length > 2000) {
-        return send({error: 'Path too large.', metric: 'bytes'})
-      }
+      if (!user) return send(invauth)
+      var {save} = req, {name, short_id} = parse_url(req.url)
 
       pgQuery(`SELECT id FROM paths WHERE name=$1 AND shortened_id=$2`,
-        [url[0], Buffer.from(url[1], 'hex')]
+        [name, short_id]
       ).then(q => q.rows[0])
       .then(path => Path.findById(path.id))
       .then(doc => {
@@ -125,9 +136,10 @@ ws.on('ready', (socket, httpReq) => {
         }
         return Path.updateOne({_id: doc._id}, {$set: {content: doc.content}})
       })
+      .catch(err(send))
     })
     socket.on('creator_loadMenu', (req, send) => {
-      if (!user) return send({error: 'Invalid authentication'})
+      if (!user) return send(invauth)
       pgQuery(`SELECT id, shortened_id, name, display_name, rating, created_by, created_at,
         image_path FROM resources`
       ).then(q => q.rows)
@@ -136,11 +148,11 @@ ws.on('ready', (socket, httpReq) => {
         var doc = doc.toObject(), {description} = doc,
         new_doc = {description}
         row.created_at = format_date(row.created_at)
-        row.url = `/resource/${row.name}-${row.shortened_id.toString('hex')}`
+        row.url = `/content/${row.name}-${row.shortened_id.toString('hex')}`
         delete row.name; delete row.shortened_id;
         return pgQuery(`SELECT display_name, username, shortened_id
-        FROM users WHERE id=$1`, [row.created_by])
-        .then(q => q.rows[0])
+          FROM users WHERE id=$1`, [row.created_by]
+        ).then(q => q.rows[0])
         .then(user => {
           delete row.created_by
           if (!user) return
@@ -154,11 +166,11 @@ ws.on('ready', (socket, httpReq) => {
       .catch(e => console.log(e))
     })
     socket.on('creator_init', (req, send) => {
-      if (!user) return send({error: 'Invalid authentication'})
-      var {url} = req
-      if (!req || !url) return send('Invalid request')
+      if (!user) return send(invauth)
+      var {url} = req, {name, short_id} = parse_url(req.url)
+      if (!(req && req.url)) return send(invreq())
       pgQuery(`SELECT id FROM paths WHERE name=$1 AND shortened_id=$2`,
-        [url[0], Buffer.from(url[1], 'hex')]
+        [name, short_id]
       ).then(q => q.rows[0])
       .then(path => Path.findById(path.id))
       .then(doc => {
@@ -168,10 +180,9 @@ ws.on('ready', (socket, httpReq) => {
         while (stack.length && i > 0) {
           var resource = stack.pop(), {url, next} = resource[0]
           if (url) {
-            var url = url.split('/')[2].split('-'),
-            name = url[0], short_id = Buffer.from(url[1],'hex')
+            var {name, short_id, short_id_hex} = parse_url(url.split('/')[2].split('-'))
             var promise = new Promise(resolve => {
-              var index = resource[1], urlpath = `/resource/${name}-${url[1]}`
+              var index = resource[1], urlpath = `/content/${name}-${short_id_hex}`
               pgQuery(`SELECT id, display_name, shortened_id rating, created_by, created_at,
               image_path FROM resources WHERE name=$1 AND shortened_id=$2`, [name, short_id])
               .then(q => q.rows[0])
@@ -195,71 +206,65 @@ ws.on('ready', (socket, httpReq) => {
         })
       })
       .then(res => send(res))
-      .catch(e => console.log(e))
+      .catch(err(send))
     })
   })()
 
   socket.on('update_article', (req, send) => {
-    if (!req) return send({error: 'Invalid request'})
-    if (!user) return send({error: 'Invalid authentication'})
-    var resource
+    if (!user) return send(invauth)
+    if (!req) return send(invreq())
 
-    var id = req.id.split('-'), name = id[0], short_id = Buffer.from(id[1], 'hex')
+    var {name, short_id} = parse_url(url.split('-'))
 
     pgQuery(`SELECT id, name, shortened_id, created_by FROM resources
       WHERE name=$1 AND shortened_id=$2`, [name, short_id]
     ).then(q => q.rows[0])
-    .then(qResource => {
-      resource = qResource
+    .then(resource => {
+      if (!resource) throw 'No results found'
       if (resource.created_by !== user.id) throw 'Invalid authentication'
-      return Resource.findById(resource.id)
-    })
-    .then(doc => {
-      if (!doc) throw 'Resource missing'
-      if (doc.__t !== 'Article') throw 'Invalid resource: Must be article'
-      var file_name = `${resource.name}-${resource.shortened_id.toString('hex')}.html`,
-      article_path = path.join(__dirname, '../public/articles/', file_name),
-      file_stream = fs.createWriteStream(article_path)
+      pgQuery(`UPDATE resources SET last_modified_at=$2 WHERE id=$1`, [resource.id, new Date])
+      return Resource.findById(resource.id).then(doc => {
+        if (!doc) throw 'Resource missing'
+        if (doc.__t !== 'Article') throw 'Invalid resource: Must be article'
+        var file_name = `${resource.name}-${resource.shortened_id.toString('hex')}.html`,
+        article_path = path.join(__dirname, '../public/articles/', file_name),
+        file_stream = fs.createWriteStream(article_path)
 
-      doc.source = `/articles/${file_name}`
-      doc.save()
-      file_stream.once('open', fd => {
-        file_stream.write(req.text)
-        file_stream.end()
+        doc.source = `/articles/${file_name}`
+        doc.save()
+        file_stream.once('open', fd => {
+          file_stream.write(req.text)
+          file_stream.end()
+        })
+        send('done')
       })
-      send('done')
     })
-    .catch(e => {
-      console.log(e);
-      send({error: e})
-    })
+    .catch(err(send))
   })
 
   socket.on('check_model', (req, send) => {
     try {
-      if (!req) return send({error: 'Invalid request', message: 'Request required'})
-      if (!user) return send({error: 'Invalid authentication'})
-      if (!req.type) return send({error: 'Invalid request', message: 'Type required'})
+      if (!user) return send(invauth)
+      if (!req) return send(invreq())
+      if (!req.type) return send(invreq('Type required'))
       if (req.type === 'user') {
         var name = user.name, shortened_id = Buffer.from(user.shortened_id, 'hex'),
         sql_name = 'username'
       }
       else {
-        if (!req.id) return send({error: 'Invalid request', message: 'ID required'})
-        var id = req.id.split('-'), name = id[0], shortened_id = Buffer.from(id[1], 'hex'),
-        sql_name = 'name'
+        if (!req.id) return send(invreq('ID required'))
+        var {name, short_id} = parse_url(req.id.split('-')), sql_name = 'name'
       }
       if (!valid.isIn(req.type, ['user','path','resource'])) {
-        return send({error: 'Invalid request', message: 'Invalid type'})
+        return send(invreq('Invalid type'))
       }
     }
     catch (e) {
-      console.log(e);
-      return send({error: 'Invalid request'})
+      return err(send)(e)
     }
 
     pgQuery(`SELECT ${select_sql_properties[req.type]} FROM ${req.type}s
-      WHERE ${sql_name}=$1 AND shortened_id=$2`, [name, shortened_id]
+      WHERE ${sql_name}=$1 AND shortened_id=$2`, [name, short_id]
     ).then(q => q.rows[0])
     .then(res => {
       if (!res) throw 'No results found'
@@ -300,39 +305,31 @@ ws.on('ready', (socket, httpReq) => {
         queries.push(mongo_query)
       }
 
-      return Promise.all(queries).then(() => returnMessage)
+      return Promise.all(queries).then(() => send(returnMessage))
     })
-    .then(res => {
-      // console.log(res);
-      send(res)
-    })
-    .catch(error => {
-      err(error)
-      send({error})
-    })
+    .catch(err(send))
   })
 
   socket.on('update_model', (req, send) => {
     try {
-      if (!req) return send({error: 'Invalid request', message: 'Request required'})
-      if (!user) return send({error: 'Invalid authentication'})
-      if (!req.type) return send({error: 'Invalid request', message: 'Type required'})
+      if (!user) return send(invauth)
+      if (!req) return send(invreq())
+      if (!req.type) return send(invreq('Type required'))
       if (req.type === 'user') {
         var name = user.name, shortened_id = Buffer.from(user.shortened_id, 'hex'),
         sql_name = 'username'
       }
       else {
-        if (!req.id) return send({error: 'Invalid request', message: 'ID required'})
-        var id = req.id.split('-'), name = id[0], shortened_id = Buffer.from(id[1], 'hex'),
+        if (!req.id) return send(invreq('ID required'))
+        var {name, short_id} = parse_url(req.id.split('-'))
         sql_name = 'name'
       }
       if (!valid.isIn(req.type, ['user','path','resource'])) {
-        return send({error: 'Invalid request', message: 'Invalid type'})
+        return send(invreq('Invalid type'))
       }
     }
     catch (e) {
-      // console.log(e);
-      return send({error: 'Invalid request'})
+      return err(send)(e)
     }
 
     if (req.properties.length > req.values.length) {
@@ -343,18 +340,15 @@ ws.on('ready', (socket, httpReq) => {
     }
 
     pgQuery(`SELECT ${select_sql_properties[req.type]} FROM ${req.type}s
-      WHERE ${sql_name}=$1 AND shortened_id=$2`, [name, shortened_id]
+      WHERE ${sql_name}=$1 AND shortened_id=$2`, [name, short_id]
     ).then(q => q.rows[0])
     .then(res => {
       if (!res) throw 'No results found'
       if (res.created_by && res.created_by !== user.id) throw 'Invalid authentication'
-      var sql_keys = [],
-      sql_values = [],
-      mongo_keys = [],
-      mongo_values = [],
+      var sql_keys = [], sql_values = [],
+      mongo_keys = [], mongo_values = [],
       queries = [],
-      errors = [],
-      returnMessage = {}
+      errors = [], returnMessage = {}
 
       for (var i = req.properties.length-1; i >= 0; i--) {
         var key = req.properties[i]
@@ -377,7 +371,7 @@ ws.on('ready', (socket, httpReq) => {
               var file_path = path.join(__dirname, '../public/articles')
               fs.rename(`${file_path}/${res.name}-${res.shortened_id.toString('hex')}.html`,
               `${file_path}/${value}-${res.shortened_id.toString('hex')}.html`,
-              err => console.log(err))
+              err => errorlog(err))
               mongo_keys.push('source')
               mongo_values.push(`/articles/${value}-${res.shortened_id.toString('hex')}.html`)
             }
@@ -412,53 +406,49 @@ ws.on('ready', (socket, httpReq) => {
         queries.push(mongo_query)
       }
 
-      return Promise.all(queries).then(() => returnMessage)
+      return Promise.all(queries).then(() => {
+        if (res.id && res.type !== 'user') pgQuery(`UPDATE ${req.type}s
+          SET last_modified_at=$2 WHERE id=$1`, [res.id, new Date]
+        ).catch(e => e)
+        return send(returnMessage)
+      })
     })
-    .then(res => {
-      // console.log(res);
-      send(res)
-    })
-    .catch(error => {
-      err(error)
-      send({error})
-    })
+    .catch(err(send))
   })
 
   socket.on('is_following', (req, send) => {
-    if (!req) return send({error: 'Invalid request'})
-    if (!user) return send({error: 'Not logged in'})
-    if (!req.id) return send({error: 'No path ID'})
+    if (!user) return send(invauth)
+    if (!(req && req.url)) return send(invreq())
 
-    var id = req.id.split('-'), name = id[0], shortened_id = Buffer.from(id[1], 'hex')
+    var {name, short_id} = parse_url(req.url.split('/')[2].split('-'))
 
-    pgQuery(`SELECT id = ANY((SELECT paths_following FROM users WHERE id=$3)::uuid[])
-      AS in_array FROM paths WHERE name=$1 AND shortened_id=$2`, [name, shortened_id, user.id]
+    return pgQuery(`SELECT id = ANY((SELECT paths_following FROM users WHERE id=$3)::uuid[])
+      AS in_array FROM paths WHERE name=$1 AND shortened_id=$2`, [name, short_id, user.id]
     ).then(q => send(q.rows[0].in_array))
   })
 
   socket.on('follow_path', (req, send) => {
-    if (!req) return send({error: 'Invalid request'})
-    if (!user) return send({error: 'Not logged in'})
-    if (!req.id) return send({error: 'No path ID'})
+    if (!user) return send(invauth)
+    if (!(req && req.url)) return send(invreq())
 
-    var id = req.id.split('-'), name = id[0], shortened_id = Buffer.from(id[1], 'hex')
-    pgQuery(`SELECT id FROM paths WHERE name=$1 AND shortened_id=$2`, [name, shortened_id])
-    .then(q => q.rows[0])
-    .then(path => pgQuery(`UPDATE users SET paths_following = (SELECT
-      (CASE
-        WHEN $2=ANY(paths_following) THEN array_remove(paths_following,$2)
-        ELSE array_append(paths_following,$2)
-      END)::uuid[] as array
-    FROM users WHERE id=$1) WHERE id=$1 RETURNING (SELECT
-      (CASE
-        WHEN $2=ANY(paths_following) THEN true
-        ELSE false
-      END) as in_array)`, [user.id, path.id]))
+    var {name, short_id} = parse_url(req.url.split('/')[2].split('-'))
+
+    return pgQuery(`SELECT id FROM paths WHERE name=$1 AND shortened_id=$2`,
+      [name, short_id]
+    ).then(q => q.rows[0])
+    .then(path => pgQuery(`UPDATE users SET paths_following = (SELECT ${
+      `(CASE ${
+        `WHEN $2=ANY(paths_following) THEN array_remove(paths_following,$2)
+        ELSE array_append(paths_following,$2) `
+      }END)::uuid[] as array `
+    }FROM users WHERE id=$1) WHERE id=$1 RETURNING (SELECT ${
+      `(CASE ${
+        `WHEN $2=ANY(paths_following) THEN true
+        ELSE false `
+      }END) as in_array)`
+    }`, [user.id, path.id]))
     .then(q => q.rows[0])
     .then(path => send({state: path.in_array}))
-    .catch(error => {
-      err(error)
-      send('error')
-    })
+    .catch(err(send))
   })
 })

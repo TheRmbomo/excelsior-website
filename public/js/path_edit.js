@@ -122,6 +122,5 @@ _id('tray-right').addEventListener('mousedown', event => {
 
 Array.from(_class('menu-option'), c => c.addEventListener('click', event => {
   Array.from(_class('menu'), c => c.style.display = 'none')
-  console.dir(_id(event.currentTarget.value));
   _id(event.currentTarget.value).style.display = ''
 }))

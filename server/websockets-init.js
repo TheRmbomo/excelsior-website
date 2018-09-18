@@ -1,7 +1,7 @@
 const WebSocket = require('ws')
 const cookie = require('cookie')
 const valid = require('validator')
-const {httpServer} = require('./app')
+const {httpServer, errorlog} = require('./app')
 const {pgQuery} = require('./db/pg')
 const {redisClient} = require('./middleware/passport')
 
@@ -74,10 +74,12 @@ ws.on('connection', (socket, req) => {
   var promise = Promise.resolve()
   if (socket.sessionID) {
     promise = promise.then(() => {
-      return new Promise((resolve, reject) => redisClient.get(socket.sessionID, (err, session) => {
-        if (err) return reject(err)
-        resolve(session)
-      }))
+      return new Promise((resolve, reject) => {
+        redisClient.get(socket.sessionID, (err, session) => {
+          if (err) return reject(err)
+          resolve(session)
+        })
+      })
       .then(session => {
         if (!session) throw 'No session'
         session.save = () => new Promise((resolve, reject) => {
@@ -87,19 +89,24 @@ ws.on('connection', (socket, req) => {
           })
         })
         socket.session = session
-        socket.user = {id: socket.session.passport.user}
-        return pgQuery(`SELECT username, shortened_id FROM users WHERE id=$1`, [socket.user.id])
-        .then(q => q.rows[0])
-        .then(user => {
-          socket.user.name = user.username
-          socket.user.shortened_id = user.shortened_id.toString('hex')
-        })
+        if (socket.session.passport.user) {
+          socket.user = {id: socket.session.passport.user}
+          return pgQuery(`SELECT username, shortened_id FROM users WHERE id=$1`,
+            [socket.user.id]
+          ).then(q => q.rows[0])
+          .then(user => {
+            if (!user) return
+            socket.user.name = user.username
+            socket.user.shortened_id = user.shortened_id.toString('hex')
+          })
+        }
+        else return
       })
     })
   }
 
   promise.then(() => ws.emit('ready', socket, req))
-  .catch(e => e)
+  .catch(e => errorlog(e))
 })
 
 module.exports = ws

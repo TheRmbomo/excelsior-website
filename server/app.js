@@ -2,6 +2,7 @@ require('./config/config')
 
 const path = require('path')
 const http = require('http')
+const fs = require('fs')
 const express = require('express')
 const passport = require('passport')
 
@@ -14,10 +15,19 @@ const httpPort = 3000
 Object.assign(app.locals, {
   title: '',
   navigation: true,
-  absoluteDir: path.join(__dirname, '..')
+  absoluteDir: path.join(__dirname, '..'),
 })
 
-module.exports = {app, httpServer}
+var errorlog = e => {
+  var log = process.env.ERROR_LOG
+  if (log) {
+    fs.appendFile(path.join(app.locals.absoluteDir, log), Error(e).stack + '\n', err => {
+      if (err) console.log(Error(err))
+    })
+  }
+}
+
+module.exports = {app, httpServer, errorlog}
 require('./routes/public-routes')
 // --
 

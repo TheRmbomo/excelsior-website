@@ -14,7 +14,7 @@ const {pgQuery} = require('./../db/pg')
 const {shortenId, createUser} = require('./../middleware/passport')
 const {sanitize} = require('./../middleware/utilities')
 const User = require('./../db/models/user')
-const {listResults, pathGroup, resourceGroup, objectPage} = require('./web-routes')
+const {listResults, pathGroup, objectPage} = require('./web-routes')
 
 var defaultAvatar = '/img/default_avatar.png'
 
@@ -74,16 +74,24 @@ express.urlencoded({extended: true}),
     returning: 'id, username'
   }))
   .then(user => req.login(user, err => {
-    if (err) return next('nf')
+    if (err) {
+      errorlog(err)
+      return next('nf')
+    }
     res.redirect(`/user/${user.username}-${user.shortened_id.toString('hex')}`)
   }))
   .catch(e => {
-    console.log(e)
+    errorlog(e)
     res.redirect('back')
   })
 })
 
-app.get('/login', (req, res) => res.render('login', {title: 'Sign-in'}))
+app.get('/login', (req, res) => {
+  res.render('login', {
+    title: 'Sign-in',
+    lastPage: req.query.page
+  })
+})
 
 app.get('/signup', (req, res) => res.render('signup', {
   title: 'Creating a User',
@@ -105,7 +113,7 @@ app.get('/users', (req, res, next) => {
     })
   })
   .catch(e => {
-    console.log(Error(e))
+    errorlog(e)
     return next('nf')
   })
 })
@@ -131,7 +139,7 @@ app.use('/user/:id', (req, res, next) => objectPage({
   next()
 })
 .catch(e => {
-  console.log(e);
+  errorlog(e);
   next('nf')
 }), userRouter)
 
@@ -166,7 +174,7 @@ userRouter.get('/paths', (req, res, next) => {
   // TODO: If user has made this page private, return next()
 
   var perspective = (req.user && req.user.id === user.id) ? 'You' : 'They',
-  own = req.user.id === user.id
+  own = req.user ? req.user.id === user.id : false
 
   Promise.all([
     pathGroup(req, listResults, {
@@ -176,14 +184,14 @@ userRouter.get('/paths', (req, res, next) => {
       params: [user.id],
       empty_message: `${perspective} haven\'t created any paths yet.`,
       visible: own || user.show_createdPaths
-    }).catch(e => e),
+    }).catch(e => (errorlog(e), null)),
     pathGroup(req, listResults, {
       group_name: 'Currently Following',
       condition: 'WHERE id = ANY((SELECT paths_following FROM users WHERE id=$1)::uuid[])',
       params: [user.id],
       empty_message: `${perspective} aren\'t following anyone\'s paths yet.`,
       visible: own || user.show_followedPaths
-    }).catch(e => e)
+    }).catch(e => (errorlog(e), null))
   ])
   .then(listings => {
     listings = listings.filter(i => !!i).reduce((text, group) => {
@@ -199,7 +207,7 @@ userRouter.get('/paths', (req, res, next) => {
     })
   })
   .catch(e => {
-    console.log(Error(e))
+    errorlog(e)
     return next('nf')
   })
 })
@@ -243,11 +251,10 @@ app.get('/my-files', (req, res, next) => {
     })
   })
   .catch(e => {
-    console.log(Error(e))
+    errorlog(e)
     return next('nf')
   })
 })
-*/
 
 app.post('/upload-file', (req, res, next) => {
   if (!req.user) return next('auth')
@@ -262,15 +269,20 @@ app.post('/upload-file', (req, res, next) => {
     return require('./../middleware/formidable')(req,res)
   })
   .then(upload => {
-    if (!upload || upload.error) throw `Upload Error: ${(upload && upload.error) ? upload.error : 'Cancelled'}`
+    if (!upload || upload.error) throw `Upload Error: ${
+      (upload && upload.error) ? upload.error : 'Cancelled'
+    }`
 
     if (upload.files[0].size + taken_space >= 1024 * 1024 * 5) {
-      return fs.unlink(path.join(app.locals.absoluteDir, 'public/', 'files/', upload.filename), err => err)
+      let filePath = path.join(app.locals.absoluteDir, 'public/', 'files/', upload.filename)
+      return fs.unlink(filePath, err => errorlog(err))
     }
     var file = upload.files[0], filePath = '/'
 
     if (file.type.substr(0,5) === 'image') {
-      fs.rename(path.join(app.locals.public, 'files/', upload.filename), path.join(app.locals.public, 'img/', upload.filename), err => err)
+      let oldPath = path.join(app.locals.public, 'files/', upload.filename),
+      newPath = path.join(app.locals.public, 'img/', upload.filename)
+      fs.rename(oldPath, newPath, err => errorlog(err))
       filePath += 'img/'
     }
 
@@ -280,7 +292,7 @@ app.post('/upload-file', (req, res, next) => {
   })
   .then(() => res.redirect('back'))
   .catch(e => {
-    console.log(Error(e))
+    errorlog(e)
     return next('nf')
   })
 })
@@ -292,12 +304,12 @@ app.post('/delete-file', express.json(), express.urlencoded({extended: true}), (
   if (req.body['change-avatar']) {
     return pgQuery('UPDATE users SET avatar_path=$2 WHERE id=$1', [req.user.id, file_name])
     .then(q => res.redirect('back'))
-    .catch(e => console.log(Error(e)))
+    .catch(e => errorlog(e))
   }
 
   if (req.user.avatar_path === file_name) {
     pgQuery('UPDATE users SET avatar_path=NULL WHERE id=$1', [req.user.id])
-    .catch(e => console.log(Error(e)))
+    .catch(e => errorlog(e))
   }
 
   pgQuery('SELECT owner, path FROM files WHERE id=$1', [image_id])
@@ -310,7 +322,8 @@ app.post('/delete-file', express.json(), express.urlencoded({extended: true}), (
   .then(() => pgQuery('DELETE FROM files WHERE id=$1', [image_id]))
   .then(() => res.redirect('back'))
   .catch(e => {
-    console.log(Error(e))
+    errorlog(e)
     next('nf')
   })
 })
+*/

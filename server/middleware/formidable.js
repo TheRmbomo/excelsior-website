@@ -6,7 +6,7 @@ const uuid = require('uuid/v4')
 module.exports = (req, opt) => {
   opt = Object.assign({
     outputPath: path.join(__dirname, '../../public/'),
-    min: 300,
+    min: 0,
     max: 5 * 1024 * 1024,
     multiple: true
   }, opt)
@@ -75,4 +75,5 @@ module.exports = (req, opt) => {
       } else return resolve({fields})
     })
   })
+  .catch(e => console.log(e))
 }

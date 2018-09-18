@@ -11,7 +11,12 @@ update_source_field = original => {
 },
 update_model = req => ws.emit('update_model', req, res => {
   try {
-    if (res.error) res.error.map(error => error_blurb(error))
+    if (res.error) {
+      if (typeof res.error === 'object') res.error.map(error => error_blurb(error))
+      else {
+        console.log(res.error);
+      }
+    }
     else req.properties.map(id => {
       if (_id(id)) _id(id).style.backgroundColor = ''
     })

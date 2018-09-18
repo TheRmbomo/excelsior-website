@@ -11,7 +11,7 @@
         {{#if logged-in}}
         <a href="/logout"><button type="button">Logout</button></a>
         {{else}}
-        <a href="/login"><button type="button">Log In</button></a>
+        <a href="/login?page={{pageURL}}"><button type="button">Log In</button></a>
         {{/if}}
       </div>
       {{#if logged-in}}

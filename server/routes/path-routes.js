@@ -4,15 +4,13 @@ const valid = require('validator')
 const hbs = require('hbs')
 const uuid = require('uuid/v4')
 
-const {app} = require('./../app')
+const {app, errorlog} = require('./../app')
 const {pgQuery} = require('./../db/pg')
 const {shortenId} = require('./../middleware/passport')
 const Path = require('./../db/models/path')
 const Resource = require('./../db/models/resource')
 const PathStatus = require('./../db/models/pathStatus')
 const {listResults, pathGroup, resourceGroup, objectPage} = require('./web-routes')
-
-var err = e => console.log(Error(e))
 
 app.get('/path', (req, res) => res.redirect('/paths'))
 app.get('/paths', (req, res, next) => {
@@ -46,7 +44,7 @@ app.get('/paths', (req, res, next) => {
     })
   })
   .catch(e => {
-    err(e)
+    errorlog(e)
     return next('nf')
   })
 })
@@ -100,7 +98,8 @@ app.route('/create-path')
       sql_places.push(`$${params.push(id)}`)
     }
     return pgQuery(`INSERT INTO paths (${sql_properties.toString()})
-    VALUES (${sql_places.toString()}) RETURNING id`, params)
+      VALUES (${sql_places.toString()}) RETURNING id`, params
+    )
   })
   .then(q => q.rows[0])
   .then(row => {
@@ -112,7 +111,7 @@ app.route('/create-path')
   })
   .then(shortened_id => res.redirect(`/path/${name}-${shortened_id}`))
   .catch(e => {
-    err(e)
+    errorlog(e)
     return res.redirect('back')
   })
   // pgQuery(`SELECT string_agg(tags, ',') as tags FROM paths`)
@@ -144,12 +143,13 @@ app.use('/path/:id', (req, res, next) => objectPage({
   return next()
 })
 .catch(e => {
-  err(e)
+  errorlog(e)
   return next('nf')
 }), pathRouter)
 
 pathRouter.get('/', (req, res, next) => res.render('path', {
-  title: res.locals.path.display_name
+  title: res.locals.path.display_name,
+  logged_in: !!req.user
 }))
 
 pathRouter.get('/edit', (req, res, next) => {
@@ -187,7 +187,9 @@ pathRouter.get('/:index', (req, res, next) => {
   var index = parseFloat(req.params.index) - 1
   var {path} = res.locals, {content} = path
   if (index === -1) return res.redirect(path.url + '/1')
-  if (isNaN(index) || !(content.length > index && index >= 0)) return res.redirect(path.url)
+  if (isNaN(index) || !(content && content.length > index && index >= 0)) {
+    return res.redirect(path.url)
+  }
 
   var promise = Promise.resolve()
   if (req.user) {

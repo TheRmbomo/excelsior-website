@@ -1,5 +1,5 @@
 <div class="island round border dark background" style="min-width: 12em; max-width: 30em;">
-  <form action={{#if createUser}}"/signup"{{else}}"/login-user"{{/if}} method="{{#if createUser}}get{{else}}post{{/if}}">
+  <form action={{#if createUser}}"/signup"{{else}}"/login-user"{{/if}} method="get">
     <h2 class="unset center padding">
       {{#if createUser}}Create a Free Account!{{else}}Log in to Existing Account{{/if}}
     </h2>
@@ -7,6 +7,7 @@
       <div class="tr">
         <label for="email" class="td" style="width: 5em;">Email:</label>
         <input id="email" class="td padding" name="email" type="email"/>
+        <input type="hidden" name="lastPage" value="{{lastPage}}">
       </div>
       {{#if createUser}}
       {{else}}

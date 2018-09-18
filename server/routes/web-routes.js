@@ -4,45 +4,51 @@ const valid = require('validator')
 const hbs = require('hbs')
 const uuid = require('uuid/v4')
 
-const {app} = require('./../app')
+const {app, errorlog} = require('./../app')
 const {pgQuery} = require('./../db/pg')
 const {shortenId} = require('./../middleware/passport')
+const formidable = require('./../middleware/formidable')
 const Path = require('./../db/models/path')
 const Resource = require('./../db/models/resource')
 
-var err = e => console.log(Error(e)),
-listResults = (req, rows, opt) => rows.reduce((promise, res) => promise.then(text => {
+var listResults = (req, rows, opt) => rows.reduce((promise, res) => promise.then(text => {
   if (!res.name || !res.shortened_id) return text
   if (opt.type === 'path') {
     res.following = (req.user && req.user.paths_following.indexOf(res.id) !== -1)
   }
   res.shortened_id = res.shortened_id.toString('hex')
   res.last_modified_at = req.format_date(res.last_modified_at)
-  res.url = `/${opt.type}/${res.name}-${res.shortened_id}`
+  res.url = `/${opt.type}/${res.name}-${res.shortened_id}`.replace('resource', 'content')
+  var deletedUser = new hbs.SafeString(`<span style="font-size: 0.8em;">${
+    '[Deleted User]'
+  }</span><br>`)
 
   if (res.created_by !== '00000000-0000-0000-0000-000000000000') {
     return pgQuery(`SELECT id, display_name, username, shortened_id FROM users
-    WHERE id=$1`, [res.created_by])
-    .then(q => {
-      if (q.rows[0]) return q.rows[0]
-
-      res.author = new hbs.SafeString('<span style="font-size: 0.8em;">[Deleted User]</span><br>')
+      WHERE id=$1`, [res.created_by]
+    ).then(q => q.rows[0])
+    .then(user => {
+      if (user) return user
+      // No user
+      res.author = deletedUser
       pgQuery(`UPDATE ${opt.type}s SET created_by='00000000-0000-0000-0000-000000000000'
-      WHERE id=$1`, [res.id])
-      .catch(e => e)
+        WHERE id=$1`, [res.id]
+      ).catch(e => errorlog(e))
       throw ''
     })
     .then(user => {
       res.author = user.display_name
       if (res.author.length > 16) res.author = res.author.slice(0,16).trim() + '...'
       res.owned = req.user ? (req.user.id === user.id) : false
-      res.author = new hbs.SafeString('<span style="white-space: nowrap;">By: '
-      + hbs.Utils.escapeExpression(res.author) + '</span><br>')
+      res.author = new hbs.SafeString(`<span style="white-space: nowrap;">By: <a href="${
+        `/user/${user.username}-${user.shortened_id.toString('hex')}`
+      }">` + hbs.Utils.escapeExpression(res.author) + '</a></span><br>')
       return text
     })
-    .catch(e => text)
-  } else {
-    res.author = new hbs.SafeString('<span style="font-size: 0.8em;"><em>[By Deleted User]</em></span><br>')
+    .catch(e => (errorlog(e), text))
+  }
+  else {
+    res.author = deletedUser
     return text
   }
 })
@@ -51,18 +57,20 @@ listResults = (req, rows, opt) => rows.reduce((promise, res) => promise.then(tex
     pgQuery(`DELETE FROM ${opt.type}s WHERE id=$1`, [res.id])
     return text
   }
-  var description = doc.description || new hbs.SafeString('<em style="font-size: 0.8em">[No Description]</em>')
+  var description = doc.description || new hbs.SafeString(`<em style="font-size: 0.8em">${
+    '[No Description]'
+  }</em>`)
   if (description.length > 85) description = description.slice(0, 85).trim() + '...'
   res.description = description
   if (opt.type === 'path') res.second_row = true
   return text +  hbs.compile(`{{> result_listing}}`)(res)
 })), Promise.resolve(''))
-.catch(e => err(e)),
+.catch(e => errorlog(e)),
 resultsGroup = (req, list, opt) => new Promise((resolve, reject) => {
   // Setting defaults
   opt = Object.assign({
-    properties: `id, created_by, shortened_id, name, display_name, image_path, last_modified_at,
-    rating`,
+    properties: `id, created_by, shortened_id, name, display_name, image_path,
+    last_modified_at, rating`,
     condition: '',
     order: 'ORDER BY last_modified_at DESC',
     params: [],
@@ -74,8 +82,9 @@ resultsGroup = (req, list, opt) => new Promise((resolve, reject) => {
   if (!opt.type) return reject('Type required')
   if (!opt.model) return reject('Model required')
   if (!opt.visible) return reject('Not visible')
-  return pgQuery(`SELECT ${opt.properties} FROM ${opt.type}s ${opt.condition} ${opt.order}`, opt.params)
-  .then(q => q.rows)
+  return pgQuery(`SELECT ${opt.properties} FROM ${opt.type}s ${opt.condition} ${opt.order}`,
+    opt.params
+  ).then(q => q.rows)
   .then(rows => resolve(rows))
   .catch(e => reject(e))
 })
@@ -88,10 +97,7 @@ resultsGroup = (req, list, opt) => new Promise((resolve, reject) => {
   }</div>`)
   return {group_name: opt.group_name, results}
 })
-.catch(e => {
-  err(e)
-  return null
-}),
+.catch(e => null),
 pathGroup = (req, list, opt) => resultsGroup(req, list, Object.assign(opt, {
   type: 'path',
   model: Path
@@ -110,13 +116,12 @@ objectPage = opt => {
   }, opt)
   return (req, res, next) => {
     var {id} = req.params
-    id = id.split('-')
-    id.splice(2)
-    if (!id[0] || !id[1]) return next('nf')
+    id = id.split('-').slice(0,2)
+    if (!id[0] || !id[1]) return Promise.reject('No results')
 
     return pgQuery(`SELECT ${opt.properties} FROM ${opt.type}s ${opt.condition}`,
-    [id[0], Buffer.from(id[1], 'hex')])
-    .then(q => q.rows)
+      [id[0], Buffer.from(id[1], 'hex')]
+    ).then(q => q.rows)
     .then(rows => {
       if (!rows.length) throw 'No results'
       if (rows.length > 1) throw 'Multiple results' // TODO: Redirect to search
@@ -136,8 +141,8 @@ objectPage = opt => {
 
       if (res.created_by !== '00000000-0000-0000-0000-000000000000') {
         return pgQuery('SELECT shortened_id, username, display_name FROM users WHERE id=$1;',
-        [res.created_by])
-        .then(q => q.rows[0])
+          [res.created_by]
+        ).then(q => q.rows[0])
         .then(user => {
           if (user) {
             user.shortened_id = user.shortened_id.toString('hex')
@@ -146,7 +151,8 @@ objectPage = opt => {
           } else {
             res.author = 'Deleted User'
             pgQuery(`UPDATE paths SET created_by='00000000-0000-0000-0000-000000000000'
-            WHERE id=$1`, [res.id])
+              WHERE id=$1`, [res.id]
+            )
           }
           return res
         })
@@ -162,7 +168,6 @@ module.exports.resourceGroup = resourceGroup
 module.exports.objectPage = objectPage
 
 app.get('/', (req, res) => {
-  // pgQuery('UPDATE users SET emails=array_append(emails,$2) WHERE id=$1', ['def765af-4fb5-4477-9e21-0f7d24ec29c2','a@c.com'])
   res.render('index', {
     title: 'Axys Mundi, the intersection of our paths.',
     message: req.user ? '' : 'Welcome to Axys Mundi'
@@ -170,14 +175,15 @@ app.get('/', (req, res) => {
 })
 
 app.get('/questions', (req, res) => {
-  pgQuery(`SELECT id, first_name, last_name, question, asked_at,
-  answer, answered_by, answered_at
-  FROM questions ORDER BY asked_at DESC`)
-  .then(q => q.rows)
+  pgQuery(`SELECT id, first_name, last_name, question, asked_at, answer, answered_by,
+    answered_at FROM questions ORDER BY asked_at DESC`
+  ).then(q => q.rows)
   .then(questions => {
     questions.map(question => {
       question.asked_at = req.format_date(question.asked_at, true)
-      if (question.answered_at) question.answered_at = req.format_date(question.answered_at, true)
+      if (question.answered_at) {
+        question.answered_at = req.format_date(question.answered_at, true)
+      }
     })
 
     res.render('questions', {
@@ -185,22 +191,22 @@ app.get('/questions', (req, res) => {
       questions
     })
   })
-  .catch(e => console.log(Error(e)))
+  .catch(e => errorlog(e))
 })
 
 app.post('/answer-question', express.json(), express.urlencoded({extended: true}),
 (req, res) => {
   pgQuery(`UPDATE questions SET (answer,answered_by,answered_at)=($2,$3,now())
-  WHERE id=$1`, [req.body.id, req.body.answer, req.body.answered_by])
-  .then(() => res.redirect('back'))
+    WHERE id=$1`, [req.body.id, req.body.answer, req.body.answered_by]
+  ).then(() => res.redirect('back'))
   return
 })
 
 app.post('/delete-answer', express.json(), express.urlencoded({extended: true}),
 (req, res) => {
   pgQuery(`UPDATE questions SET (answer,answered_by,answered_at)=(null,null,null)
-  WHERE id=$1`, [req.body.id])
-  .then(() => res.redirect('back'))
+    WHERE id=$1`, [req.body.id]
+  ).then(() => res.redirect('back'))
   return
 })
 
@@ -210,6 +216,18 @@ app.post('/upload-file', (req, res, next) => {
   })
   .then(q => {
     console.log('app', q);
+    res.send(q)
+  })
+  .catch(err => {
+    console.log(err);
+    res.send(err)
+  })
+})
+
+app.post('/inbound-axys', (req, res) => {
+  formidable(req, {min: 0})
+  .then(q => {
+    console.log('mail', q);
     res.send(q)
   })
   .catch(err => {

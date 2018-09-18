@@ -64,9 +64,10 @@ userAuth = strategy => (req, res, next) => passport.authenticate(strategy, (err,
 
   req.login(user, err => {
     if (err) return next('nf')
-
-    let username = (user.username) ? user.username : 'user'
-    return res.redirect(`/user/${username}-${user.shortened_id.toString('hex')}#`)
+    pgQuery(`UPDATE users SET last_logged_in=$2 WHERE id=$1`, [user.id, new Date])
+    var username = (user.username) ? user.username : 'user'
+    if (req.query.lastPage) return res.redirect(req.query.lastPage)
+    else return res.redirect(`/user/${username}-${user.shortened_id.toString('hex')}#`)
   })
 })(req, res, next),
 createUser = opt => new Promise((resolve, reject) => {
@@ -80,8 +81,8 @@ createUser = opt => new Promise((resolve, reject) => {
   opt.properties = (opt.properties.length > 1) ? `(${opt.properties.toString()})` : opt.properties.toString()
   opt.values = (opt.values.length > 1) ? `(${opt.values.toString()})` : opt.values.toString()
   pgQuery(`INSERT INTO users ${opt.properties}
-  values ${opt.values} RETURNING ${opt.returning}`, opt.params)
-  .then(q => q.rows[0])
+    values ${opt.values} RETURNING ${opt.returning}`, opt.params
+  ).then(q => q.rows[0])
   .then(user => {
     if (user.code) return reject('Error: Cannot connect to database')
 
@@ -101,8 +102,7 @@ Object.assign(module.exports, {
 
 app.get(`/auth/facebook`, passport.authenticate('facebook'))
 app.get(`/auth/facebook/callback`, userAuth('facebook'))
-app.get('/login-user', (req, res) => res.redirect('/login'))
-app.post('/login-user', express.json(), express.urlencoded({extended: true}), userAuth('local'))
+app.get('/login-user', express.json(), express.urlencoded({extended: true}), userAuth('local'))
 
 const facebookStrategy = {
   clientID: '1810426922597279',
@@ -120,8 +120,8 @@ passport
 .use(new FacebookStrategy(facebookStrategy,
   (accessToken, refreshToken, facebookUser, done) => {
     return pgQuery(`SELECT id, shortened_id, username FROM users
-    WHERE external_ids @> ARRAY[$1]::varchar[];`, [facebookUser.id])
-    .then(q => q.rows)
+      WHERE external_ids @> ARRAY[$1]::varchar[];`, [facebookUser.id]
+    ).then(q => q.rows)
     .then(ext_users => {
       if (ext_users.length) {
         // Found Excelsior user(s) connected to this Facebook account
@@ -139,14 +139,16 @@ passport
           // Please select those you'd like to connect this Facebook account with.
           // Don't worry, you can skip this step and complete it later. It will be in your
           // user account settings
-          Promise.all(facebookUser.emails.map(email => pgQuery(`SELECT id, shortened_id, username
-            FROM users WHERE emails @> ARRAY[$1]::varchar[];`, [email.value])
-            // Matching each email on the Facebook account with verified emails on local
-            // accounts if they exist.
-            // TODO: Check that the emails are verified
-            .then(q => q.rows)
-            .then(accounts => (accounts.length) ? accounts : null)
-            .catch(e => null)
+          Promise.all(
+          // Matching each email on the Facebook account with verified emails on local
+          // accounts if they exist.
+          // TODO: Check that the emails are verified
+          facebookUser.emails.map(email => pgQuery(`SELECT id, shortened_id, username
+            FROM users WHERE emails @> ARRAY[$1]::varchar[];`, [email.value]
+          )
+          .then(q => q.rows)
+          .then(accounts => (accounts.length) ? accounts : null)
+          .catch(e => null)
           ))
           .then(related_accounts => Array.prototype.concat.apply([],related_accounts).filter(i => !!i))
           .then(related_accounts => {

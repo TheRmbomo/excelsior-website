@@ -24,7 +24,7 @@ const Resource = new Schema({
     likes: Number,
     dislikes: Number
   },
-  source_type: trueBool,
+  source_type: String,
   source: String,
   show_description: trueBool
 })

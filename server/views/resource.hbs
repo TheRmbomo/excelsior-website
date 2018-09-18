@@ -1,7 +1,10 @@
+<span id="logged_in" class="hidden">{{logged_in}}</span>
+<span id="embed" class="hidden">{{embed}}</span>
 {{#with resource}}
+<span id="resourceURL" class="hidden">{{url}}</span>
 {{#if ../embed}}
 {{else}}
-  <div class="island round dark background center padding relative . resource" style="max-width: 40em; margin-bottom: 1em;" id={{id}}>
+  <div class="island round dark background center padding relative" style="max-width: 40em; margin-bottom: 1em;" id="content">
     {{#if image_path}}<img src="{{image_path}}" style="width: 15em; height: 12em;">{{/if}}
     <h2 class="padding">{{display_name}}</h2>
     {{#if owned}}
@@ -16,12 +19,12 @@
       </tr>
     </table>
   </div>
-  {{#if show_description}}
+  {{#if show_description}}{{#if description}}
   <div class="island round dark background padding" style="max-width: 40em; margin-bottom: 1em;">
     <h2 class="center padding">Description</h2>
     <div class="round background padding">{{description}}</div>
   </div>
-  {{/if}}
+  {{/if}}{{/if}}
 {{/if}}
 
 {{#if legacy}}
@@ -39,9 +42,21 @@
   </div>
 </div>
 {{/if}}
-
 <div class="island round dark background padding" style="max-width: 40em;">
   <h2 class="center padding">Comments</h2>
-  <div class="island round background padding"></div>
+  <div class="island round background padding">
+    {{> response_field placeholder="Leave a comment..." background="dark background" action="Post" id="comment" disabled="true"}}
+    <div class="fullwidth table">
+      <div class="tr">
+        <div class="td" style="width: 5em;">
+          <!-- <img src="/image_path" alt="username" style="width: 3em; height: 3em"> -->
+        </div>
+        <div class="td">
+          no
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {{/with}}
+{{> pageJS js="resource"}}

@@ -9,6 +9,7 @@ app.set('view engine', 'hbs')
     if (!options) options = {}
     file = file.replace('.hbs','')
     res._render('../template.hbs', Object.assign(options, {
+      pageURL: req.originalUrl || req.url,
       partial: () => file
     }))
   }
