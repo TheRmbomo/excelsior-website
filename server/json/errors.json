@@ -1,0 +1,9 @@
+{
+  "server": {
+    "Invalid type": true,
+  },
+  "client": {
+    "Invalid request": true,
+    "Invalid input": true
+  }
+}

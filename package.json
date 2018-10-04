@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "test": "mocha ./test",
+    "start": "node ./server/app"
   },
   "author": "",
   "license": "ISC",
@@ -29,5 +29,9 @@
     "validator": "^9.4.1",
     "ws": "^5.2.2",
     "xss": "^0.3.8"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0"
   }
 }

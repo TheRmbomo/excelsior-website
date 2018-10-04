@@ -1,0 +1,58 @@
+{
+  "name": {
+    "_actions": [
+      {"type": "lowercase"},
+      {"type": "replace", "set": ["\\s+", "g", "_"]},
+      {"type": "replace", "set": ["\\W+", "g", ""]},
+      {"type": "replace", "set": ["_{2,}", "g", "_"]},
+      {"type": "replace", "set": ["(^[\\W_]+|_+$)", "g", ""]},
+      {"type": "trim"},
+      {"type": "require", "key": "length", "value": ["", 30]}
+    ]
+  },
+  "username": {
+    "_redirect": [1, "name"]
+  },
+  "tags": {
+    "_actions": [
+      {"type": "trim"},
+      {"type": "replace", "set": ["_{2,}", "g", "_"]},
+      {"type": "replace", "set": ["(^[\\W_]+|_+$)", "g", ""]},
+      {"type": "require", "key": "length", "value": ["", 1000]},
+      {"type": "split", "delimiter": "\\W+"}
+    ]
+  },
+  "display_name": {
+    "_actions": [
+      {"type": "trim"},
+      {"type": "replace", "set": ["_{2,}", "g", "_"]},
+      {"type": "require", "key": "length", "value": ["", 50]}
+    ]
+  },
+  "source_type": {
+
+  },
+  "text": {
+    "_actions": [
+      {"type": "trim"},
+      {"type": "replace", "set": ["[\\d_]+", "g", ""]},
+      {"type": "require", "key": "length", "value": ["", 50]}
+    ]
+  },
+  "description": {
+    "_actions": [
+      {"type": "trim"},
+      {"type": "require", "key": "length", "value": ["", 1000]}
+    ]
+  },
+  "location": {
+    "_redirect": [1, "display_name"]
+  },
+  "source": {
+    "_actions": [
+      {"type": "not_required"},
+      {"type": "match", "regex": [], "redirect": ["url", "regex"]}
+    ]
+  },
+  "show_description": {}
+}

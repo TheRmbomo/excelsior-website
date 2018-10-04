@@ -1,0 +1,44 @@
+{
+  "regex": [
+    "(?:([A-Za-z]{3,9}):(?:\\/\\/))?([-;:&=+$,\\w]+@)?([A-Za-z0-9.-]+\\.[A-Za-z0-9]{2,})(?::([0-9]+))?(?:(\\/[+~%\\/.\\w-_]*)?(?:\\?([-+=&;%@.\\/?\\w_]*))?(?:#([.!\\/\\\\\\w]*))?)?",
+    ""
+  ],
+  "youtube": {
+    "_index": 3,
+    "www.youtube.com": {
+      "_index": 5,
+      "_regex": {
+        "/watch": {
+          "_query": [6, "v"],
+          "_return": "https://www.youtube.com/embed/$6"
+        },
+        "/v/([a-zA-Z0-9_-]{11})": {
+          "_replaceIndex": [5, 1],
+          "_return": "https://www.youtube.com/embed/$5"
+        },
+        "/embed/[a-zA-Z0-9_-]{11}": {
+          "_return": "https://www.youtube.com$5"
+        },
+        "attribution_link": {
+          "_query": [6, "u"],
+          "_repeat": "https://www.youtube.com$6"
+        },
+        "oembed": {
+          "_query": [6, "url"],
+          "_repeat": "$6"
+        }
+      }
+    },
+    "youtube.com": {
+      "_redirect": [1, "www.youtube.com"]
+    },
+    "youtu.be": {
+      "_index": 5,
+      "_regex": {
+        "/[a-zA-Z0-9_-]{11}": {
+          "_return": "https://www.youtube.com/embed$5"
+        }
+      }
+    }
+  }
+}

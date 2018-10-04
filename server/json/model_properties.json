@@ -1,0 +1,56 @@
+{
+  "sql": {
+    "user": {
+      "public": ["is_public", "display_name", "first_name", "last_name", "username", "birthday", "language"],
+      "select": ["id", "shortened_id", "username"],
+      "name": "username"
+    },
+    "path": {
+      "update": "last_modified_at",
+      "public": ["is_public", "display_name", "name", "tags"],
+      "select": ["id", "created_by", "shortened_id", "name"],
+      "name": "name"
+    },
+    "resource": {
+      "update": "last_modified_at",
+      "public": ["is_public", "display_name", "name", "tags"],
+      "select": ["id", "created_by", "shortened_id", "name"],
+      "name": "name"
+    },
+    "content": {
+      "_redirect": [1, "resource"]
+    }
+  },
+  "mongo": {
+    "user": {
+      "public": ["description", "location", "show_name", "show_joinDate", "show_followedPaths", "show_description", "show_excelsiorSkills", "show_location", "show_workHistory", "show_externalSkills", "show_birthday", "show_managedPaths"]
+    },
+    "path": {
+      "public": ["description", "show_description"]
+    },
+    "resource": {
+      "public": ["description", "source", "source_type", "show_description"]
+    },
+    "content": {
+      "_redirect": [1, "resource"]
+    }
+  },
+  "path": {
+    "create": [
+      ["name", "name", "display_name"],
+      ["display_name"],
+      ["tags"],
+      ["description"]
+    ]
+  },
+  "resource": {
+    "create": [
+      ["name", "name", "display_name"],
+      ["display_name"],
+      ["tags"],
+      ["description"],
+      ["source"]
+    ],
+    "_redirect": "content"
+  }
+}

@@ -19,12 +19,11 @@ Object.assign(app.locals, {
 })
 
 var errorlog = e => {
-  var log = process.env.ERROR_LOG
-  if (log) {
-    fs.appendFile(path.join(app.locals.absoluteDir, log), Error(e).stack + '\n', err => {
-      if (err) console.log(Error(err))
-    })
-  }
+  var log = process.env.ERROR_LOG,
+  stack = e.stack ? e.stack : Error(e).stack
+  if (log) fs.appendFile(path.join(app.locals.absoluteDir, log), stack + '\n', err => {
+    if (err) console.log(Error(err))
+  })
 }
 
 module.exports = {app, httpServer, errorlog}
@@ -61,11 +60,13 @@ app.get('/not-found', (req, res) => {
 .use((err, req, res, next) => {
   if (err === 'nf') return res.status(400).redirect('/not-found')
   if (err === 'auth') return res.status(401).redirect('/login')
-  next(err)
+  else if (err) {
+    errorlog(err)
+    return res.status(500).render('error')
+  }
+  return next()
 })
-.all('*', (req, res) => {
-  res.redirect('/not-found')
-})
+.all('*', (req, res) => res.status(404).redirect('/not-found'))
 // --
 
 httpServer.listen(httpPort, '0.0.0.0', undefined, () => console.log(`Http server is up on port ${httpPort}`))

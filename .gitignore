@@ -6,5 +6,4 @@ public/img/*
 !public/img/default*
 public/articles/*
 *.bat
-test.js
 error-log
