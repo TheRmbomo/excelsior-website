@@ -3,14 +3,8 @@ const Schema = mongoose.Schema
 
 const ReviewList = new Schema({
   reviews: [{
-    history: [{
-      response: String,
-      date: Date
-    }],
-    rating: {
-      type: Number,
-      required: true
-    }
+    type: Schema.Types.ObjectId,
+    ref: 'Review'
   }]
 })
 

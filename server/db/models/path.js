@@ -53,20 +53,17 @@ const Path = new Schema({
 })
 
 Path.pre('save', function () {
-  if (this.isNew) {
-    let commentList = new CommentList()
-    let reviewList = new ReviewList()
-    this.commentList = commentList._id
-    this.reviewList = reviewList._id
-    commentList.save()
-    reviewList.save()
-  }
+  // if (this.isNew) {
+  //   let reviewList = new ReviewList()
+  //   this.reviewList = reviewList._id
+  //   reviewList.save()
+  // }
 })
 
 Path.post('remove', function () {
-  CommentList.findById(this.commentList)
+  if (this.commentList) CommentList.findById(this.commentList)
   .then(doc => doc.remove())
-  ReviewList.findById(this.reviewList)
+  if (this.reviewList) ReviewList.findById(this.reviewList)
   .then(doc => doc.remove())
   PathStatus.find({path: this._id})
   .then(docs => docs.map(doc => doc.remove()))

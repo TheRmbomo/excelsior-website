@@ -1,7 +1,6 @@
-const mongoose = require('mongoose')
-const Schema = mongoose.Schema
+const extender = require('./extender')
 
-const UserResponse = new Schema({
+module.exports = extender({
   author: {
     type: String,
     ref: 'User',
@@ -10,9 +9,6 @@ const UserResponse = new Schema({
   response: {
     type: String,
     trim: true,
-    minlength: 6,
     required: true
   }
 })
-
-module.exports = mongoose.model('UserResponse', UserResponse, 'UserResponses')
