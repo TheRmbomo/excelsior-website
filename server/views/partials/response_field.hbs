@@ -1,4 +1,4 @@
 <div class="fullwidth relative inblock">
-  <textarea class="fullwidth padding text" cols="{{cols}}" placeholder="{{response-text}}">{{value}}</textarea>
-  <button class="absolute light background" style="right: .5em; bottom: .75em;">Send</button>
+  <textarea{{#if id}} id="{{id}}-field"{{/if}} class="fullwidth padding text{{#if background}} {{background}}{{/if}}"{{#if cols}} cols="{{cols}}"{{/if}} placeholder="{{placeholder}}">{{default}}</textarea>
+  <button{{#if id}} id="{{id}}-send"{{/if}} class="absolute light background" style="right: .5em; bottom: .75em;"{{#if disabled}} disabled{{/if}}>{{#if action}}{{action}}{{else}}Send{{/if}}</button>
 </div>

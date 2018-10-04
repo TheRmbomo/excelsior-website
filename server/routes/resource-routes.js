@@ -9,6 +9,8 @@ const uuid = require('uuid/v4')
 const {app, errorlog} = require('./../app')
 const {pgQuery} = require('./../db/pg')
 const {shortenId} = require('./../middleware/passport')
+const formidable = require('./../middleware/formidable')
+const validation = require('./../middleware/validation')
 const Resource = require('./../db/models/resource')
 const Video = require('./../db/models/video')
 const Article = require('./../db/models/article')
@@ -19,7 +21,8 @@ const models = {
   video: Video,
   article: Article
 }
-const {listResults, pathGroup, resourceGroup, objectPage} = require('./web-routes')
+const {listResults, pathGroup, resourceGroup, objectPage, createMaterial
+} = require('./web-routes')
 
 app.get('/content', (req, res, next) => {
   Promise.all([
@@ -61,88 +64,35 @@ app.route('/create-content')
     type: 'content',
     id: uuid(),
     author,
-    // resource_types: [
-    //   {value: 'video', text: 'Video'}, {value: 'article', text: 'Article'}
-    // ],
     source: true,
     create: 'Create Content'
   })
 })
-.post(express.json(), express.urlencoded({extended: true}), (req, res) => {
-  var {id, type} = req.body
-  if (!req.body.display_name) return res.status(400).send({display_name: 'required'})
-  if (!id) return res.status(400).send({id: 'required'})
-  var uuidv4 = /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
-  if (!valid.isUUID(id) || !valid.matches(id, uuidv4)) {
-    return res.status(400).send({id: 'invalid'})
-  }
-  // if (!valid.isIn(req.body.type, ['video','article'])) {
-  //   return res.status(400).send({type: 'invalid'})
-  // }
-
-  try {
-    var name = req.sanitize('name', req.body.display_name),
-    display_name = req.sanitize('display_name', req.body.display_name),
-    tags = req.sanitize('tags', req.body.tags),
-    description = req.sanitize('description', req.body.description),
-    source = req.sanitize('source', req.body.source)
-    if (type === 'select') throw {type: 'required'}
-  } catch (e) {return res.status(400).send(e)}
-
-  pgQuery(`SELECT NULL FROM resources WHERE id=$1`, [id])
-  .then(q => q.rows[0])
-  .then(resource => {
-    if (resource) throw 'Repeated request'
-
-    var insert_id = id ? ['id, ','$5,'] : ['',''],
-    params = [name, display_name, tags, req.user.id]
-    if (id) params.push(id)
-
-    return pgQuery(`INSERT INTO resources (${insert_id[0]}name, display_name, tags,
-      created_by, last_modified_by) VALUES (${insert_id[1]}$1,$2,$3,$4,$4) RETURNING id`,
-      params
-    )
-  }).then(q => q.rows[0])
-  .then(row => {
-    var shortened_id = shortenId(row.id)
-    console.log('Created resource')
-    var resource = new Resource({
-      _id: row.id, description, source
-    })
-    return resource.save()
-    .then(doc => pgQuery(`UPDATE resources SET shortened_id=$2 WHERE id=$1`,
-      [row.id, shortened_id])
-    )
-    .then(() => res.redirect(`/content/${name}-${shortened_id.toString('hex')}`))
-  })
-  .catch(e => {
-    errorlog(e)
-    return res.redirect('back')
-  })
-})
+.post(formidable(), createMaterial({type: 'resource'}))
 
 var resourceRouter = express.Router()
-app.use('/content/:id', (req, res, next) => objectPage({
+app.use('/content/:id', objectPage({
   type: 'resource',
   properties: `id, is_public, name, display_name, created_by, created_at, last_modified_by,
   last_modified_at, image_path, shortened_id`,
   condition: 'WHERE name=$1 AND shortened_id=$2',
   model: Resource
-})(req, res, next)
-.then(resource => {
-  Object.assign(resource, {
-    owned: (req.user && req.user.id === resource.created_by),
-    url: `/content/${resource.name}-${resource.shortened_id}`
-  })
+}), (req, res, next) => {
+  req.page.then(resource => {
+    Object.assign(resource, {
+      owned: (req.user && req.user.id === resource.created_by),
+      url: `/content/${resource.name}-${resource.shortened_id}`
+    })
 
-  if (!resource) return next('nf')
-  res.locals.resource = resource
-  return next()
-})
-.catch(e => {
-  errorlog(e)
-  next('nf')
-}), resourceRouter)
+    if (!resource) return next('nf')
+    res.locals.resource = resource
+    return next()
+  })
+  .catch(e => {
+    errorlog(e)
+    next('nf')
+  })
+}, resourceRouter)
 
 resourceRouter.get('/', (req, res) => res.render('resource', {
   title: res.locals.resource.display_name,
@@ -153,6 +103,7 @@ resourceRouter.get('/edit', (req, res, next) => {
   if (!req.user) return next('auth')
 
   var resource = res.locals.resource
+  console.log(resource);
   if (resource.created_by !== req.user.id) return res.redirect(`/content/${resource.url}`)
 
   resource.is_public ? (resource.is_public = 'checked') :
@@ -179,16 +130,31 @@ resourceRouter.get('/edit', (req, res, next) => {
     //   if (err) return resolve()
     //   resolve(data)
     // })
+    resolve()
   })
   .then(text => {
     return res.render('settings', {
       header: 'Content',
       type: 'resource',
       page: 'resource_edit',
-      title: 'Editing Content',
-      text
+      title: 'Editing Content'
     })
   })
+})
+
+resourceRouter.delete('/delete', (req, res, next) => {
+  if (!req.user) return next('auth')
+  var resource = res.locals.resource
+  Promise.all([
+    pgQuery(`DELETE FROM resources WHERE id=$1`, [resource.id]),
+    Resource.deleteOne({_id: resource.id})
+  ])
+  .then(q => res.json({
+    message: 'Successfully deleted',
+    display_name: resource.display_name,
+    url: resource.url
+  }))
+  .catch(e => (errorlog(e), res.status(500).send('Server Error')))
 })
 
 resourceRouter.get('/embed', (req, res, next) => {

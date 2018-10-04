@@ -3,7 +3,9 @@ const fs = require('fs')
 const formidable = require('formidable')
 const uuid = require('uuid/v4')
 
-module.exports = (req, opt) => {
+const {errorlog} = require('./../app.js')
+
+module.exports = opt => (req, res, next) => {
   opt = Object.assign({
     outputPath: path.join(__dirname, '../../public/'),
     min: 0,
@@ -71,9 +73,17 @@ module.exports = (req, opt) => {
             return resolve({files, fields})
           })
           .catch(e => e)
-        } else return resolve({files, fields})
-      } else return resolve({fields})
+        }
+        else return resolve({files, fields})
+      }
+      else return resolve({fields})
     })
   })
-  .catch(e => console.log(e))
+  .then(data => {
+    req.form = data
+    if (data.fields) req.body = data.fields
+    if (data.files) req.files = data.files
+    next()
+  })
+  .catch(errorlog)
 }

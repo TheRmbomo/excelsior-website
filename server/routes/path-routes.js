@@ -1,4 +1,3 @@
-const events = require('events')
 const express = require('express')
 const valid = require('validator')
 const hbs = require('hbs')
@@ -7,10 +6,13 @@ const uuid = require('uuid/v4')
 const {app, errorlog} = require('./../app')
 const {pgQuery} = require('./../db/pg')
 const {shortenId} = require('./../middleware/passport')
+const formidable = require('./../middleware/formidable')
+const validation = require('./../middleware/validation')
 const Path = require('./../db/models/path')
 const Resource = require('./../db/models/resource')
 const PathStatus = require('./../db/models/pathStatus')
-const {listResults, pathGroup, resourceGroup, objectPage} = require('./web-routes')
+const {listResults, pathGroup, resourceGroup, objectPage, createMaterial
+} = require('./web-routes')
 
 app.get('/path', (req, res) => res.redirect('/paths'))
 app.get('/paths', (req, res, next) => {
@@ -67,85 +69,38 @@ app.route('/create-path')
     create: 'Create Path'
   })
 })
-.post(express.json(), express.urlencoded({extended: true}), (req, res, next) => {
-  var {id, display_name, tags, description} = req.body
-  if (!display_name) return res.status(400).send({display_name: 'required'})
-  if (!id) return res.status(400).send({id: 'required'})
-  var uuid_regex = `^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-${''
-  }[0-9A-F]{12}$`
-  if (!valid.isUUID(id) ||
-  !valid.matches(id, new RegExp(uuid_regex, 'i'))) {
-    return res.status(400).send({id: 'invalid'})
-  }
-
-  try {
-    var name = req.sanitize('name', display_name)
-    display_name = req.sanitize('display_name', display_name)
-    tags = req.sanitize('tags', tags)
-    description = req.sanitize('description', description)
-  } catch (e) {return res.status(400).send(e)}
-
-  pgQuery(`SELECT NULL FROM paths WHERE id=$1`, [id])
-  .then(q => q.rows[0])
-  .then(path => {
-    if (path) id = null
-    var sql_properties = ['name', 'display_name', 'tags', 'created_by',
-    'last_modified_by'],
-    sql_places = ['$1','$2','$3','$4','$4'],
-    params = [name, display_name, tags, req.user.id]
-    if (id) {
-      sql_properties.push('id')
-      sql_places.push(`$${params.push(id)}`)
-    }
-    return pgQuery(`INSERT INTO paths (${sql_properties.toString()})
-      VALUES (${sql_places.toString()}) RETURNING id`, params
-    )
-  })
-  .then(q => q.rows[0])
-  .then(row => {
-    var shortened_id = shortenId(row.id)
-    console.log('Created path');
-    pgQuery(`UPDATE paths SET shortened_id=$2 WHERE id=$1`, [row.id, shortened_id])
-    var path = new Path({_id: row.id, description})
-    return path.save().then(() => shortened_id.toString('hex'))
-  })
-  .then(shortened_id => res.redirect(`/path/${name}-${shortened_id}`))
-  .catch(e => {
-    errorlog(e)
-    return res.redirect('back')
-  })
-  // pgQuery(`SELECT string_agg(tags, ',') as tags FROM paths`)
-})
+.post(formidable(), createMaterial({type: 'path'}))
+// pgQuery(`SELECT string_agg(tags, ',') as tags FROM paths`)
 
 var pathRouter = express.Router()
 app.get('/paths/:id', (req, res) => res.redirect(`/path/${req.params.id}`))
-app.use('/path/:id', (req, res, next) => objectPage({
+app.use('/path/:id', objectPage({
   type: 'path',
   properties: `id, is_public, name, display_name, created_by, created_at,
   last_modified_by, last_modified_at, image_path, shortened_id`,
   condition: 'WHERE name=$1 AND shortened_id=$2',
   model: Path
-})(req, res, next)
-.then(path => {
-  path = Object.assign({
-    contributors: [],
-    contentCount: 0
-  }, path, {
-    contributors: `${path.contributors.length
-    } ${path.contributors.length !== 1 ? 'People' : 'Person'}`,
-    contentCount: `${path.contentCount
-    } ${path.contentCount !== 1 ? 'Resources' : 'Resource'}`,
-    owned: (req.user && req.user.id === path.created_by),
-    url: `/path/${path.name}-${path.shortened_id}`
+}), (req, res, next) => {
+  req.page.then(path => {
+    if (!path) return next('nf')
+    path = Object.assign({
+      contributors: [],
+      contentCount: 0
+    }, path, {
+      contributors: `${path.contributors.length
+      } ${path.contributors.length !== 1 ? 'People' : 'Person'}`,
+      owned: (req.user && req.user.id === path.created_by),
+      url: `/path/${path.name}-${path.shortened_id}`
+    })
+    res.locals.path = path
+    return next()
   })
-  if (!path) return next('nf')
-  res.locals.path = path
-  return next()
-})
-.catch(e => {
-  errorlog(e)
-  return next('nf')
-}), pathRouter)
+  .catch(e => {
+    errorlog(e)
+    return next('nf')
+  })
+}, pathRouter)
+
 
 pathRouter.get('/', (req, res, next) => res.render('path', {
   title: res.locals.path.display_name,
@@ -181,6 +136,21 @@ pathRouter.get('/creator', (req, res, next) => {
     title: 'Paving A Path',
     path
   })
+})
+
+pathRouter.delete('/delete', (req, res, next) => {
+  if (!req.user) return next('auth')
+  var path = res.locals.path
+  Promise.all([
+    pgQuery(`DELETE FROM paths WHERE id=$1`, [path.id]),
+    Path.deleteOne({_id: path.id})
+  ])
+  .then(q => res.json({
+    message: 'Successfully deleted',
+    display_name: path.display_name,
+    url: path.url
+  }))
+  .catch(e => (errorlog(e), res.status(500).send('Server Error')))
 })
 
 pathRouter.get('/:index', (req, res, next) => {

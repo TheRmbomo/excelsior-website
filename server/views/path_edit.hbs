@@ -6,16 +6,8 @@
     <div class="td">
       <nav id="tray" style="overflow: hidden; white-space: nowrap;">
         <button class=". menu-option" value="display" type="button" style="border-radius: 5px 5px 0 0;">Display</button>
-        {{!--
-        <button class="menu" type="button" style="border-radius: 5px 5px 0 0;">Private</button>
-        --}}
         <button class=". menu-option" value="content" type="button" style="border-radius: 5px 5px 0 0;">Content</button>
-        {{!--
-        <button class="menu" type="button" style="border-radius: 5px 5px 0 0;">Analytics</button>
-        --}}
-        {{!--
-        <button class="menu" type="button" style="border-radius: 5px 5px 0 0;">Manage</button>
-        --}}
+        <button class=". menu-option" value="manage" type="button" style="border-radius: 5px 5px 0 0;">Manage</button>
       </nav>
     </div>
     <div class="td" style="width: 2em;">
@@ -73,7 +65,10 @@
     </div>
   </div>
 </div>
-<div id="content" class="round background padding overflow . menu" style="max-height: 30em;">
+<div id="content" class="round background padding overflow hidden . menu" style="max-height: 30em;">
   <a href="{{url}}/creator"><button type="button" class="light background">Enter Creator</button></a>
 </div>
-{{> pageJS js="path_edit"}}
+<div id="manage" class="round background padding overflow hidden . menu" style="max-height: 30em;">
+  <button id="delete" type="button" style="background: #664444;">Delete</button>
+</div>
+{{> pageJS js="edit" query="?type=path"}}

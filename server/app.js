@@ -47,6 +47,7 @@ require('./routes/web-routes')
 require('./routes/path-routes')
 require('./routes/resource-routes')
 require('./routes/user-routes')
+require('./routes/js-routes')
 // require('./routes/search-routes');
 require('./routes/chatbot-routes');
 // --

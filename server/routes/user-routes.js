@@ -12,6 +12,7 @@ const uuidParse = require('uuid-parse').parse
 const {app} = require('./../app')
 const {pgQuery} = require('./../db/pg')
 const {shortenId, createUser} = require('./../middleware/passport')
+const formidable = require('./../middleware/formidable')
 const {sanitize} = require('./../middleware/utilities')
 const User = require('./../db/models/user')
 const {listResults, pathGroup, objectPage} = require('./web-routes')
@@ -27,9 +28,7 @@ app.get('/logout', (req, res) => {
 
 app.route('/create-user')
 .get((req, res) => res.redirect('back'))
-.post(express.json(),
-express.urlencoded({extended: true}),
-(req, res, next) => {
+.post(formidable(), (req, res, next) => {
   req.logout()
   var newUser = req.body, error = {}, is_error = () => Object.keys(error).length
 
@@ -119,29 +118,30 @@ app.get('/users', (req, res, next) => {
 })
 
 var userRouter = express.Router()
-app.use('/user/:id', (req, res, next) => objectPage({
+app.use('/user/:id', objectPage({
   type: 'user',
   properties: `id, shortened_id, username, first_name, last_name,
   display_name, avatar_path, TO_CHAR(birthday, 'yyyy-mm-dd') AS birthday, friends, currency, created_at`,
   condition: 'WHERE username=$1 AND shortened_id=$2',
   model: User
-})(req, res, next)
-.then(user => {
-  Object.assign(user, {
-    name: user.first_name + ((user.first_name && user.last_name) ? ' ' + user.last_name : user.last_name),
-    url: `/user/${user.username}-${user.shortened_id}`,
-    created_at: req.format_date(user.created_at),
-    avatar_path: user.avatar_path || defaultAvatar,
-    own: (req.user && req.user.id === user.id)
-  })
+}), (req, res, next) => {
+  req.page.then(user => {
+    Object.assign(user, {
+      name: user.first_name + ((user.first_name && user.last_name) ? ' ' + user.last_name : user.last_name),
+      url: `/user/${user.username}-${user.shortened_id}`,
+      created_at: req.format_date(user.created_at),
+      avatar_path: user.avatar_path || defaultAvatar,
+      own: (req.user && req.user.id === user.id)
+    })
 
-  res.locals.user = user
-  next()
-})
-.catch(e => {
-  errorlog(e);
-  next('nf')
-}), userRouter)
+    res.locals.user = user
+    next()
+  })
+  .catch(e => {
+    errorlog(e);
+    next('nf')
+  })
+}, userRouter)
 
 userRouter.get('/', (req, res, next) => {
   var user = res.locals.user
@@ -165,6 +165,21 @@ userRouter.get('/edit', (req, res, next) => {
     page: 'user_edit',
     title: 'Editing Profile'
   })
+})
+
+userRouter.delete('/delete', (req, res, next) => {
+  if (!req.user) return next('auth')
+  var user = res.locals.user
+  Promise.all([
+    pgQuery(`DELETE FROM users WHERE id=$1`, [user.id]),
+    User.deleteOne({_id: user.id})
+  ])
+  .then(q => res.json({
+    message: 'Successfully deleted',
+    display_name: user.display_name,
+    url: user.url
+  }))
+  .catch(e => (errorlog(e), res.status(500).send('Server Error')))
 })
 
 userRouter.get('/paths', (req, res, next) => {
