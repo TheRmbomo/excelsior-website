@@ -22,16 +22,6 @@ getUnset = (elem, property) => {
   return unset
 }
 
-// console.oldLog = console.log
-//
-// console.log = message => {
-//   let debug = _id('debug')
-//   if (!debug) return
-//
-//   if (debug.children.length >= 5) debug.children[0].outerHTML = ''
-//   _id('debug').innerHTML += `<div>${message}</div>`
-// }
-
 var animate = (render, jump = true) => {
   var running = true, start = null, lastFrame = null
   return new Promise(resolve => {
@@ -54,29 +44,20 @@ var animate = (render, jump = true) => {
   })
 },
 stepAnimate = opt => animate((duration, dT) => {
+  opt = Object.assign({stop: () => false}, opt)
+  if (opt.duration <= 0) return opt.return
   if (duration > opt.duration) dT = duration - opt.duration
-  opt.animate.map(property => {
-    property[0][property[1]] += property[2]/opt.duration*dT
-  })
+  opt.animate.map(p => p[0](p[1]/opt.duration*dT))
   if (typeof opt.animateCB === 'function') opt.animateCB(duration, dT)
-  if (duration <= opt.duration) return true
+  if (duration <= opt.duration && !opt.stop()) return true
   else return opt.return
 }),
 animateResult = opt => new Promise((resolve, reject) => {
   opt = Object.assign({
-    elements: [],
-    n_elements: [],
-    properties: [],
-    conditions: [],
-    delta: [],
-    units: [],
-    initials: [],
-    stepSize: 0,
-    duration: 0,
-    stepTotal: 0,
-    jump: true,
-    fps: 60,
-    overflow: 0
+    elements: [], n_elements: [],
+    properties: [], conditions: [], delta: [], units: [], initials: [],
+    stepSize: 0, duration: 0, stepTotal: 0,
+    jump: true, fps: 60, overflow: 0
   }, opt)
   if (!opt.elements.length) reject('Element required')
   if (opt.stepSize && opt.duration) reject('Both stepSize and duration cannot be defined')

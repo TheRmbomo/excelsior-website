@@ -11,26 +11,20 @@ let tb = {
   rModel: {
     width: 30,
     height: 20
-  },
-  sized: {
-    array: [],
-    push: function(...e) {
+  }
+  ,sized: {
+    array: []
+    ,push: function(...e) {
       e.map(e => {
         if (this.array.indexOf(e) === -1) this.array.push(e)
-        e[0].stopsize = () => {
-          this.array.splice(this.array.indexOf(e), 1)
-        }
+        e[0].stopsize = () => this.array.splice(this.array.indexOf(e), 1)
       })
-      tb.resize()
+      this.resize()
       return this
     }
-  },
-  resize: () => {
-    tb.sized.array.map(obj => {
+    ,resize: () => tb.sized.array.map(obj => {
       var element = obj[0]
-      Object.keys(obj[1]).map(k => {
-        element[k] = obj[1][k]()
-      })
+      Object.keys(obj[1]).map(k => element[k] = obj[1][k]())
     })
   }
 }
@@ -59,15 +53,13 @@ loadTwoUtils(tb)
   headerDIV.insertBefore(backCell, headerDIV.children[1])
   tb.shead.addEventListener('click', event => {
     var change = {
-      shead_top: parseFloat(tb.shead.style.top),
+      shead_top: parseFloat(tb.shead.style.top) || 0,
       header_top: parseFloat(header.style.top)
     }
     if (tb.shead_state === 'closed') {
       header.classList.remove('hidden')
       tb.headerHeight = parseFloat(getComputedStyle(header).height)
-      header.classList.add('hidden')
       tb.shead_state = 'opening'
-      header.classList.remove('hidden')
       stepAnimate({duration: 200, animate: [
         [change, 'shead_top', tb.headerHeight],
         [change, 'header_top', tb.headerHeight]
@@ -112,6 +104,7 @@ tb.resource = {
     tb.index = i
     tb.resource.highlight(i)
     _id('frame').contentWindow.location.replace(tb.resources[i].url + '/embed')
+    if (tb.loginlink) tb.loginlink.href = `/login?page=${tb.pathURL}/${tb.index+1}`
     tb.resourceGroup.translation.x = (tb.two.width - i*3*tb.rModel.width)/2
     if (push) history.pushState({index: tb.index}, '', `${tb.pathURL}/${i+1}`)
   },
@@ -127,11 +120,19 @@ tb.resource = {
   }
 }
 
+_id('frame').contentWindow.addEventListener('load', event => {
+  var loginlink = _id('frame').contentWindow.document.getElementById('loginlink')
+  if (!loginlink) return
+  loginlink.href = `/login?page=${tb.pathURL}/${tb.index+1}`
+  tb.loginlink = loginlink
+})
+
 ;(() => {
   var contentStyle = getComputedStyle(tb.content)
-  tb.sized.push(
-    [tb.two, {width: ()=>parseFloat(contentStyle.width), height: ()=>parseFloat(contentStyle.height)}]
-  )
+  tb.sized.push([tb.two, {
+    width: () => parseFloat(contentStyle.width),
+    height: () => parseFloat(contentStyle.height)
+  }])
   tb.resourceGroup = new Two.Group()
   tb.resourceGroup.translation.set(tb.two.width/2,0)
   tb.two.add(tb.resourceGroup)
@@ -162,8 +163,12 @@ tb.resource = {
         ], parent: tb.resourceGroup, v: {x: index*width*3/2, y: 0},
         gotDOM: elements => {
           elements.group.addEventListener('mousedown', event => {
-            if (!event.touches && event.button !== 0) return
-            tb.resource.change(elements.group.two.index)
+            if (!event.touches) {
+              if (event.button === 0) tb.resource.change(elements.group.two.index)
+              else if (event.button === 2) {
+
+              }
+            }
           })
         }
       })
@@ -180,5 +185,5 @@ tb.resource = {
 })()
 
 window.addEventListener('resize', event => {
-  tb.resize()
+  tb.sized.resize()
 })

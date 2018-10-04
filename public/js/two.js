@@ -10235,12 +10235,14 @@ let loadTwoUtils = obj => Object.assign(obj, {
       else if (a >= 500) return reject('Not found')
       else return true
     })
-  }).then(e => (e.two = twoElement, e)),
-  getDOMs: array => Promise.all(array.map(e => obj.getDOM(e))).then(elements => {
+  }).then(e => (e.two = twoElement, e.two.dom = e))
+  .catch(e => e),
+  getDOMs: array => Promise.all(array.map(e => obj.getDOM(e).catch(e => e)))
+  .then(elements => {
     var obj = {}
-    elements.map((e, i) => obj[array[i].key] = e)
+    elements.map((e, i) => array[i] ? obj[array[i].key] = e : undefined)
     return obj
-  }).catch(e => console.error(e)),
+  }).catch(e => e),
   openTab: url => {
     var a = document.createElement('a'),
     e = document.createEvent('MouseEvents')
@@ -10251,27 +10253,31 @@ let loadTwoUtils = obj => Object.assign(obj, {
     a.dispatchEvent(e)
   },
   createModel: opt => {
-    var group = opt.group || new Two.Group(),
-    is_gotDOM = typeof opt.gotDOM === 'function'
-    group.childKeys = []
-    if (is_gotDOM) var elements = []
+    opt = opt || {}
+    var group = opt.group || new Two.Group()
+    if (typeof opt.gotDOM !== 'function') opt.gotDOM = () => {}
+    var elements = []
+    group.children.names = []
     if (opt.elements) group.add(opt.elements.map(element => {
-      group.childKeys.push(element[0])
+      if (!(element[0] && element[1])) return
+      group.children.names.push(element[0])
       element[1].key = element[0]
       if (group.key) element[1].key = group.key + '_' + element[1].key
       else if (opt.name) element[1].key = opt.name + '_' + element[1].key
       group[element[0]] = element[1]
-      if (is_gotDOM) elements.push(element[1])
+      elements.push(element[1])
+      if (element[2]) {
+        element[2] = element[2](element[1])
+        Object.keys(element[2]).map(k => element[1][k] = element[2][k])
+      }
       return element[1]
     }))
-    Object.freeze(group.childKeys)
     if (opt.parent) opt.parent.add(group)
     group.key = group.key || opt.name || 'group'
+    if (opt.data) Object.assign(group, opt.data(group))
     if (opt.v) group.translation.copy(opt.v)
-    if (is_gotDOM) {
-      elements.push(group)
-      obj.getDOMs(elements).then(opt.gotDOM)
-    }
+    elements.push(group)
+    obj.getDOMs(elements).then(opt.gotDOM)
     return group
   },
   mouse: {
